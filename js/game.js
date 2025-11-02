@@ -19,6 +19,14 @@ const levelScoreElement = document.getElementById('levelScore');
 const difficultyBadge = document.getElementById('difficultyBadge');
 const continueButton = document.getElementById('continueButton');
 
+// Мобильные элементы управления
+const mobileControls = document.getElementById('mobileControls');
+const moveArea = document.getElementById('moveArea');
+const shootArea = document.getElementById('shootArea');
+const shootButton = document.querySelector('.shoot-button');
+const mobilePause = document.getElementById('mobilePause');
+const mobileMenu = document.getElementById('mobileMenu');
+
 // Экраны
 const mainMenu = document.getElementById('mainMenu');
 const gameScreen = document.getElementById('gameScreen');
@@ -105,10 +113,10 @@ const DIFFICULTY_LEVELS = {
 // Настройки графики
 const GRAPHICS_SETTINGS = {
     explosions: true,
-    particleDensity: 'medium', // 'low', 'medium', 'high'
+    particleDensity: 'medium',
     screenShake: true,
-    renderDistance: 'high', // 'low', 'medium', 'high'
-    frameRateTarget: 60, // 30, 60, 0 (unlimited)
+    renderDistance: 'high',
+    frameRateTarget: 60,
     lowSpecMode: false
 };
 
@@ -149,9 +157,18 @@ let bonusNotifications = [];
 let lastMoveSound = 0;
 let currentDifficulty = 'normal';
 
+// Мобильное управление
+let isMobile = false;
+let touchStartX = 0;
+let touchStartY = 0;
+let isMoving = false;
+let moveDirection = null;
+let isShooting = false;
+let autoShootInterval = null;
+
 // Оптимизация производительности
 let lastUpdateTime = 0;
-let UPDATE_INTERVAL = 1000 / 60; // 60 FPS
+let UPDATE_INTERVAL = 1000 / 60;
 let frameCount = 0;
 let lastFpsUpdate = 0;
 let currentFPS = 0;
@@ -208,13 +225,23 @@ class GraphicsSettings {
     loadSettings() {
         const saved = localStorage.getItem('tankGraphicsSettings');
         if (saved) {
-            Object.assign(GRAPHICS_SETTINGS, JSON.parse(saved));
+            try {
+                const parsedSettings = JSON.parse(saved);
+                Object.assign(GRAPHICS_SETTINGS, parsedSettings);
+            } catch (e) {
+                console.warn('Ошибка загрузки настроек графики:', e);
+                this.resetToDefaults();
+            }
         }
         this.applySettings();
     }
     
     saveSettings() {
-        localStorage.setItem('tankGraphicsSettings', JSON.stringify(GRAPHICS_SETTINGS));
+        try {
+            localStorage.setItem('tankGraphicsSettings', JSON.stringify(GRAPHICS_SETTINGS));
+        } catch (e) {
+            console.warn('Ошибка сохранения настроек графики:', e);
+        }
     }
     
     setSetting(key, value) {
@@ -224,25 +251,41 @@ class GraphicsSettings {
     }
     
     applySettings() {
-        // Применяем настройки FPS
         if (GRAPHICS_SETTINGS.frameRateTarget === 0) {
-            UPDATE_INTERVAL = 1000 / 144; // 144 FPS максимум
+            UPDATE_INTERVAL = 1000 / 144;
         } else {
             UPDATE_INTERVAL = 1000 / GRAPHICS_SETTINGS.frameRateTarget;
         }
+        
+        this.applyGraphicsSettings();
+    }
+    
+    applyGraphicsSettings() {
+        console.log('Настройки графики применены:', GRAPHICS_SETTINGS);
     }
     
     getParticleLimit() {
         switch(GRAPHICS_SETTINGS.particleDensity) {
-            case 'low': return 10;
-            case 'medium': return 25;
-            case 'high': return 50;
-            default: return 25;
+            case 'low': return 8;
+            case 'medium': return 20;
+            case 'high': return 40;
+            default: return 20;
         }
     }
     
     getScreenShakeIntensity() {
         return GRAPHICS_SETTINGS.screenShake ? 1 : 0;
+    }
+    
+    resetToDefaults() {
+        Object.assign(GRAPHICS_SETTINGS, {
+            explosions: true,
+            particleDensity: 'medium',
+            screenShake: true,
+            renderDistance: 'high',
+            frameRateTarget: 60,
+            lowSpecMode: false
+        });
     }
 }
 
@@ -468,244 +511,118 @@ class EnhancedExplosion {
     }
 }
 
-// Управление экранами
-function showScreen(screen) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-    screen.classList.remove('hidden');
+// Определение мобильного устройства
+function detectMobile() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+           window.innerWidth <= 768;
 }
 
-// Обработчики кнопок меню
-startButton.addEventListener('click', () => {
-    showScreen(gameScreen);
-    startGame();
-});
+// Инициализация мобильного управления
+function initMobileControls() {
+    isMobile = detectMobile();
+    
+    if (isMobile) {
+        console.log('Мобильное устройство обнаружено, активируем сенсорное управление');
+        setupTouchControls();
+        mobileControls.classList.remove('hidden');
+    } else {
+        console.log('Десктопное устройство, используем клавиатурное управление');
+        mobileControls.classList.add('hidden');
+    }
+}
 
-controlsButton.addEventListener('click', () => {
-    showScreen(controlsScreen);
-});
+// Настройка сенсорного управления
+function setupTouchControls() {
+    // Управление движением
+    moveArea.addEventListener('touchstart', handleMoveStart, { passive: false });
+    moveArea.addEventListener('touchmove', handleMove, { passive: false });
+    moveArea.addEventListener('touchend', handleMoveEnd, { passive: false });
+    
+    // Управление стрельбой
+    shootButton.addEventListener('touchstart', handleShootStart, { passive: false });
+    shootButton.addEventListener('touchend', handleShootEnd, { passive: false });
+    
+    // Кнопки паузы и меню
+    mobilePause.addEventListener('click', togglePause);
+    mobileMenu.addEventListener('click', showMainMenu);
+    
+    // Предотвращение стандартного поведения
+    document.addEventListener('touchmove', function(e) {
+        if (e.target === moveArea || e.target === shootButton) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+}
 
-aboutButton.addEventListener('click', () => {
-    showScreen(aboutScreen);
-});
+function handleMoveStart(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+    isMoving = true;
+}
 
-difficultyButton.addEventListener('click', () => {
-    showScreen(difficultyScreen);
-    updateDifficultyStats();
-});
+function handleMove(e) {
+    if (!isMoving) return;
+    e.preventDefault();
+    
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - touchStartX;
+    const deltaY = touch.clientY - touchStartY;
+    
+    // Определяем направление на основе наибольшего смещения
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        moveDirection = deltaX > 0 ? 'right' : 'left';
+    } else {
+        moveDirection = deltaY > 0 ? 'down' : 'up';
+    }
+    
+    // Обновляем начальную позицию для плавного управления
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+}
 
-graphicsButton.addEventListener('click', () => {
-    showScreen(graphicsScreen);
-    updateGraphicsUI();
-});
+function handleMoveEnd(e) {
+    e.preventDefault();
+    isMoving = false;
+    moveDirection = null;
+}
 
-backFromControls.addEventListener('click', () => {
-    showScreen(mainMenu);
-});
+function handleShootStart(e) {
+    e.preventDefault();
+    isShooting = true;
+    
+    // Автоматическая стрельба при удержании
+    autoShootInterval = setInterval(() => {
+        if (isShooting && player && !gamePaused && !gameOver) {
+            const bullet = player.shoot();
+            if (bullet) {
+                bullets.push(bullet);
+            }
+        }
+    }, 300);
+}
 
-backFromAbout.addEventListener('click', () => {
-    showScreen(mainMenu);
-});
+function handleShootEnd(e) {
+    e.preventDefault();
+    isShooting = false;
+    if (autoShootInterval) {
+        clearInterval(autoShootInterval);
+        autoShootInterval = null;
+    }
+}
 
-backFromDifficulty.addEventListener('click', () => {
-    showScreen(mainMenu);
-});
+function togglePause() {
+    if (gameOver || levelCompleteScreen.classList.contains('hidden')) return;
+    
+    gamePaused = !gamePaused;
+    pauseScreen.classList.toggle('hidden', !gamePaused);
+}
 
-backFromGraphics.addEventListener('click', () => {
-    showScreen(mainMenu);
-});
-
-menuButton.addEventListener('click', () => {
-    showScreen(mainMenu);
-});
-
-menuFromPauseButton.addEventListener('click', () => {
+function showMainMenu() {
     showScreen(mainMenu);
     gamePaused = false;
-});
-
-continueButton.addEventListener('click', () => {
-    gamePaused = false;
-    pauseScreen.classList.add('hidden');
-});
-
-// Переключение звука
-soundToggle.addEventListener('click', () => {
-    const soundEnabled = soundSystem.toggleMute();
-    soundToggle.textContent = `🔊 ЗВУК: ${soundEnabled ? 'ВКЛ' : 'ВЫКЛ'}`;
-});
-
-// Функция обновления статистики сложности
-function updateDifficultyStats() {
-    const difficulty = DIFFICULTY_LEVELS[currentDifficulty];
-    enemySpeedStat.textContent = `${difficulty.enemySpeed}x`;
-    enemyShootStat.textContent = `${Math.round(difficulty.enemyShootChance * 100)}%`;
-    enemyCountStat.textContent = difficulty.initialEnemies;
-    bonusChanceStat.textContent = `${Math.round(difficulty.bonusChance * 100)}%`;
 }
-
-// Обработчики выбора сложности
-function setDifficulty(difficulty) {
-    currentDifficulty = difficulty;
-    
-    // Обновляем активную кнопку
-    document.querySelectorAll('.difficulty-button').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    document.querySelector(`[data-difficulty="${difficulty}"]`).classList.add('active');
-    
-    // Обновляем статистику
-    updateDifficultyStats();
-    
-    // Обновляем бейдж в игре
-    difficultyBadge.textContent = DIFFICULTY_LEVELS[difficulty].name;
-    difficultyBadge.style.background = `linear-gradient(145deg, ${DIFFICULTY_LEVELS[difficulty].color}33, ${DIFFICULTY_LEVELS[difficulty].color}66)`;
-}
-
-easyButton.addEventListener('click', () => setDifficulty('easy'));
-normalButton.addEventListener('click', () => setDifficulty('normal'));
-hardButton.addEventListener('click', () => setDifficulty('hard'));
-expertButton.addEventListener('click', () => setDifficulty('expert'));
-
-// Функции для управления настройками графики
-function updateGraphicsUI() {
-    // Обновляем переключатели взрывов
-    document.querySelectorAll('[data-setting="explosions"]').forEach(btn => {
-        btn.classList.toggle('active', 
-            btn.dataset.value === GRAPHICS_SETTINGS.explosions.toString());
-    });
-    
-    // Обновляем плотность частиц
-    document.querySelectorAll('[data-setting="particleDensity"]').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.value === GRAPHICS_SETTINGS.particleDensity);
-    });
-    
-    // Обновляем сотрясение экрана
-    document.querySelectorAll('[data-setting="screenShake"]').forEach(btn => {
-        btn.classList.toggle('active', 
-            btn.dataset.value === GRAPHICS_SETTINGS.screenShake.toString());
-    });
-    
-    // Обновляем частоту кадров
-    document.querySelectorAll('[data-setting="frameRateTarget"]').forEach(btn => {
-        btn.classList.toggle('active', 
-            btn.dataset.value === GRAPHICS_SETTINGS.frameRateTarget.toString());
-    });
-    
-    updatePerformanceIndicator();
-}
-
-function applyGraphicsSettings() {
-    // Сохраняем настройки
-    graphicsSettings.saveSettings();
-    graphicsSettings.applySettings();
-    
-    // Применяем изменения в реальном времени
-    if (!GRAPHICS_SETTINGS.explosions) {
-        explosions = [];
-    }
-    
-    showScreen(mainMenu);
-}
-
-function resetGraphicsSettings() {
-    // Сбрасываем настройки по умолчанию
-    Object.assign(GRAPHICS_SETTINGS, {
-        explosions: true,
-        particleDensity: 'medium',
-        screenShake: true,
-        renderDistance: 'high',
-        frameRateTarget: 60,
-        lowSpecMode: false
-    });
-    
-    updateGraphicsUI();
-}
-
-function updatePerformanceIndicator() {
-    const performanceFill = document.getElementById('performanceFill');
-    const performanceText = document.getElementById('performanceText');
-    
-    let performanceLevel = 'medium';
-    let performanceTextValue = 'ОПТИМАЛЬНАЯ';
-    
-    if (GRAPHICS_SETTINGS.particleDensity === 'low' && 
-        !GRAPHICS_SETTINGS.screenShake && 
-        GRAPHICS_SETTINGS.frameRateTarget === 30) {
-        performanceLevel = 'low';
-        performanceTextValue = 'МАКСИМАЛЬНАЯ';
-    } else if (GRAPHICS_SETTINGS.particleDensity === 'high' && 
-               GRAPHICS_SETTINGS.screenShake && 
-               GRAPHICS_SETTINGS.frameRateTarget === 0) {
-        performanceLevel = 'high';
-        performanceTextValue = 'ВЫСОКАЯ НАГРУЗКА';
-    }
-    
-    performanceFill.className = `performance-fill ${performanceLevel}`;
-    performanceText.textContent = performanceTextValue;
-}
-
-// Обработчики для пресетов графики
-document.querySelectorAll('.preset-button').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const preset = this.dataset.preset;
-        
-        // Убираем активный класс у всех пресетов
-        document.querySelectorAll('.preset-button').forEach(b => b.classList.remove('active'));
-        // Добавляем активный класс текущему пресету
-        this.classList.add('active');
-        
-        // Применяем настройки пресета
-        applyGraphicsPreset(preset);
-        updateGraphicsUI();
-    });
-});
-
-function applyGraphicsPreset(preset) {
-    switch(preset) {
-        case 'low':
-            GRAPHICS_SETTINGS.explosions = true;
-            GRAPHICS_SETTINGS.particleDensity = 'low';
-            GRAPHICS_SETTINGS.screenShake = false;
-            GRAPHICS_SETTINGS.frameRateTarget = 30;
-            break;
-        case 'medium':
-            GRAPHICS_SETTINGS.explosions = true;
-            GRAPHICS_SETTINGS.particleDensity = 'medium';
-            GRAPHICS_SETTINGS.screenShake = true;
-            GRAPHICS_SETTINGS.frameRateTarget = 60;
-            break;
-        case 'high':
-            GRAPHICS_SETTINGS.explosions = true;
-            GRAPHICS_SETTINGS.particleDensity = 'high';
-            GRAPHICS_SETTINGS.screenShake = true;
-            GRAPHICS_SETTINGS.frameRateTarget = 0;
-            break;
-    }
-}
-
-// Обработчики для переключателей графики
-document.querySelectorAll('.toggle-button').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const setting = this.dataset.setting;
-        const value = this.dataset.value;
-        
-        // Преобразуем строковые значения в соответствующие типы
-        let processedValue = value;
-        if (value === 'true') processedValue = true;
-        if (value === 'false') processedValue = false;
-        if (!isNaN(value) && value !== '') processedValue = Number(value);
-        
-        // Обновляем настройку
-        GRAPHICS_SETTINGS[setting] = processedValue;
-        
-        // Обновляем UI
-        updateGraphicsUI();
-    });
-});
-
-// Обработчики кнопок графики
-applyGraphics.addEventListener('click', applyGraphicsSettings);
-resetGraphics.addEventListener('click', resetGraphicsSettings);
 
 // Класс Танк
 class Tank {
@@ -720,7 +637,6 @@ class Tank {
         this.aimDirection = 0;
         this.cooldown = 0;
         
-        // Используем настройки сложности
         const difficulty = DIFFICULTY_LEVELS[currentDifficulty];
         this.speed = isPlayer ? difficulty.playerSpeed : difficulty.enemySpeed;
         
@@ -746,37 +662,70 @@ class Tank {
         const oldY = this.y;
         
         if (this.isPlayer) {
-            if (keys['w']) {
-                this.y -= this.speed;
-                this.direction = 0;
+            // Мобильное управление
+            if (isMobile && isMoving && moveDirection) {
+                switch(moveDirection) {
+                    case 'up':
+                        this.y -= this.speed;
+                        this.direction = 0;
+                        break;
+                    case 'down':
+                        this.y += this.speed;
+                        this.direction = 2;
+                        break;
+                    case 'left':
+                        this.x -= this.speed;
+                        this.direction = 3;
+                        break;
+                    case 'right':
+                        this.x += this.speed;
+                        this.direction = 1;
+                        break;
+                }
+                
+                // На мобильных устройствах прицеливание совпадает с направлением движения
+                this.aimDirection = this.direction;
+                
+                // Звук движения
+                if ((this.x !== this.lastX || this.y !== this.lastY) && Date.now() - lastMoveSound > 200) {
+                    soundSystem.play('move');
+                    lastMoveSound = Date.now();
+                }
+            } 
+            // Управление с клавиатуры (для десктопа)
+            else if (!isMobile) {
+                if (keys['w']) {
+                    this.y -= this.speed;
+                    this.direction = 0;
+                }
+                if (keys['s']) {
+                    this.y += this.speed;
+                    this.direction = 2;
+                }
+                if (keys['a']) {
+                    this.x -= this.speed;
+                    this.direction = 3;
+                }
+                if (keys['d']) {
+                    this.x += this.speed;
+                    this.direction = 1;
+                }
+                
+                if ((this.x !== this.lastX || this.y !== this.lastY) && Date.now() - lastMoveSound > 200) {
+                    soundSystem.play('move');
+                    lastMoveSound = Date.now();
+                }
+                
+                this.lastX = this.x;
+                this.lastY = this.y;
+                
+                if (keys['arrowup']) this.aimDirection = 0;
+                if (keys['arrowright']) this.aimDirection = 1;
+                if (keys['arrowdown']) this.aimDirection = 2;
+                if (keys['arrowleft']) this.aimDirection = 3;
             }
-            if (keys['s']) {
-                this.y += this.speed;
-                this.direction = 2;
-            }
-            if (keys['a']) {
-                this.x -= this.speed;
-                this.direction = 3;
-            }
-            if (keys['d']) {
-                this.x += this.speed;
-                this.direction = 1;
-            }
-            
-            // Звук движения
-            if ((this.x !== this.lastX || this.y !== this.lastY) && Date.now() - lastMoveSound > 200) {
-                soundSystem.play('move');
-                lastMoveSound = Date.now();
-            }
-            
-            this.lastX = this.x;
-            this.lastY = this.y;
-            
-            if (keys['arrowup']) this.aimDirection = 0;
-            if (keys['arrowright']) this.aimDirection = 1;
-            if (keys['arrowdown']) this.aimDirection = 2;
-            if (keys['arrowleft']) this.aimDirection = 3;
         } else {
+            // Логика вражеского танка
             this.moveCooldown--;
             
             if (this.moveCooldown <= 0) {
@@ -814,7 +763,6 @@ class Tank {
                 this.aimDirection = dy > 0 ? 2 : 0;
             }
             
-            // Используем настройки сложности для шанса выстрела
             const difficulty = DIFFICULTY_LEVELS[currentDifficulty];
             if (Math.random() < difficulty.enemyShootChance) {
                 const bullet = this.shoot();
@@ -1143,11 +1091,13 @@ function showBonusNotification(text) {
 function createLevel() {
     const walls = [];
     
+    // Границы уровня
     walls.push(new Wall(0, 0, canvas.width, 20, false));
     walls.push(new Wall(0, 0, 20, canvas.height, false));
     walls.push(new Wall(0, canvas.height - 20, canvas.width, 20, false));
     walls.push(new Wall(canvas.width - 20, 0, 20, canvas.height, false));
     
+    // Статические стены
     const wallPositions = [
         [200, 150], [400, 100], [600, 200],
         [100, 400], [300, 350], [500, 450],
@@ -1158,10 +1108,12 @@ function createLevel() {
         walls.push(new Wall(x, y, 40, 40, false));
     }
     
+    // Разрушаемые стены
     for (let i = 0; i < 25; i++) {
         const x = Math.floor(Math.random() * (canvas.width - 80)) + 50;
         const y = Math.floor(Math.random() * (canvas.height - 80)) + 50;
         
+        // Не ставим стены слишком близко к игроку
         if (Math.abs(x - 100) > 150 || Math.abs(y - 300) > 150) {
             walls.push(new Wall(x, y, 30, 30, true));
         }
@@ -1266,9 +1218,266 @@ function applyScreenShake() {
     return { x: totalShakeX, y: totalShakeY };
 }
 
+// Управление экранами
+function showScreen(screen) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+    screen.classList.remove('hidden');
+    
+    // Адаптация размера canvas для мобильных устройств
+    if (screen === gameScreen && isMobile) {
+        resizeCanvasForMobile();
+    }
+}
+
+// Адаптация размера canvas для мобильных устройств
+function resizeCanvasForMobile() {
+    const gameContainer = document.querySelector('.game-container');
+    const containerRect = gameContainer.getBoundingClientRect();
+    
+    // Сохраняем соотношение сторон 4:3
+    const maxWidth = containerRect.width;
+    const maxHeight = containerRect.height;
+    
+    let newWidth = maxWidth;
+    let newHeight = maxWidth * 0.75; // 4:3 соотношение
+    
+    if (newHeight > maxHeight) {
+        newHeight = maxHeight;
+        newWidth = maxHeight * 1.333; // 4:3 соотношение
+    }
+    
+    canvas.width = newWidth;
+    canvas.height = newHeight;
+    
+    // Пересоздаем уровень с новыми размерами
+    if (player) {
+        walls = createLevel();
+    }
+}
+
+// Обработчики кнопок меню
+startButton.addEventListener('click', () => {
+    showScreen(gameScreen);
+    startGame();
+});
+
+controlsButton.addEventListener('click', () => {
+    showScreen(controlsScreen);
+});
+
+aboutButton.addEventListener('click', () => {
+    showScreen(aboutScreen);
+});
+
+difficultyButton.addEventListener('click', () => {
+    showScreen(difficultyScreen);
+    updateDifficultyStats();
+});
+
+graphicsButton.addEventListener('click', () => {
+    showScreen(graphicsScreen);
+    updateGraphicsUI();
+});
+
+backFromControls.addEventListener('click', () => {
+    showScreen(mainMenu);
+});
+
+backFromAbout.addEventListener('click', () => {
+    showScreen(mainMenu);
+});
+
+backFromDifficulty.addEventListener('click', () => {
+    showScreen(mainMenu);
+});
+
+backFromGraphics.addEventListener('click', () => {
+    showScreen(mainMenu);
+});
+
+menuButton.addEventListener('click', () => {
+    showScreen(mainMenu);
+});
+
+menuFromPauseButton.addEventListener('click', () => {
+    showScreen(mainMenu);
+    gamePaused = false;
+});
+
+continueButton.addEventListener('click', () => {
+    gamePaused = false;
+    pauseScreen.classList.add('hidden');
+});
+
+// Переключение звука
+soundToggle.addEventListener('click', () => {
+    const soundEnabled = soundSystem.toggleMute();
+    soundToggle.textContent = `🔊 ЗВУК: ${soundEnabled ? 'ВКЛ' : 'ВЫКЛ'}`;
+});
+
+// Функция обновления статистики сложности
+function updateDifficultyStats() {
+    const difficulty = DIFFICULTY_LEVELS[currentDifficulty];
+    enemySpeedStat.textContent = `${difficulty.enemySpeed}x`;
+    enemyShootStat.textContent = `${Math.round(difficulty.enemyShootChance * 100)}%`;
+    enemyCountStat.textContent = difficulty.initialEnemies;
+    bonusChanceStat.textContent = `${Math.round(difficulty.bonusChance * 100)}%`;
+}
+
+// Обработчики выбора сложности
+function setDifficulty(difficulty) {
+    currentDifficulty = difficulty;
+    
+    document.querySelectorAll('.difficulty-button').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`[data-difficulty="${difficulty}"]`).classList.add('active');
+    
+    updateDifficultyStats();
+    
+    difficultyBadge.textContent = DIFFICULTY_LEVELS[difficulty].name;
+    difficultyBadge.style.background = `linear-gradient(145deg, ${DIFFICULTY_LEVELS[difficulty].color}33, ${DIFFICULTY_LEVELS[difficulty].color}66)`;
+}
+
+easyButton.addEventListener('click', () => setDifficulty('easy'));
+normalButton.addEventListener('click', () => setDifficulty('normal'));
+hardButton.addEventListener('click', () => setDifficulty('hard'));
+expertButton.addEventListener('click', () => setDifficulty('expert'));
+
+// Функции для управления настройками графики
+function updateGraphicsUI() {
+    document.querySelectorAll('[data-setting="explosions"]').forEach(btn => {
+        btn.classList.toggle('active', 
+            btn.dataset.value === GRAPHICS_SETTINGS.explosions.toString());
+    });
+    
+    document.querySelectorAll('[data-setting="particleDensity"]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.value === GRAPHICS_SETTINGS.particleDensity);
+    });
+    
+    document.querySelectorAll('[data-setting="screenShake"]').forEach(btn => {
+        btn.classList.toggle('active', 
+            btn.dataset.value === GRAPHICS_SETTINGS.screenShake.toString());
+    });
+    
+    document.querySelectorAll('[data-setting="frameRateTarget"]').forEach(btn => {
+        btn.classList.toggle('active', 
+            btn.dataset.value === GRAPHICS_SETTINGS.frameRateTarget.toString());
+    });
+    
+    updatePerformanceIndicator();
+}
+
+function applyGraphicsSettings() {
+    graphicsSettings.saveSettings();
+    graphicsSettings.applySettings();
+    
+    if (!GRAPHICS_SETTINGS.explosions) {
+        explosions = [];
+    }
+    
+    showScreen(mainMenu);
+}
+
+function resetGraphicsSettings() {
+    Object.assign(GRAPHICS_SETTINGS, {
+        explosions: true,
+        particleDensity: 'medium',
+        screenShake: true,
+        renderDistance: 'high',
+        frameRateTarget: 60,
+        lowSpecMode: false
+    });
+    
+    updateGraphicsUI();
+}
+
+function updatePerformanceIndicator() {
+    const performanceFill = document.getElementById('performanceFill');
+    const performanceText = document.getElementById('performanceText');
+    
+    let performanceLevel = 'medium';
+    let performanceTextValue = 'ОПТИМАЛЬНАЯ';
+    
+    if (GRAPHICS_SETTINGS.particleDensity === 'low' && 
+        !GRAPHICS_SETTINGS.screenShake && 
+        GRAPHICS_SETTINGS.frameRateTarget === 30) {
+        performanceLevel = 'low';
+        performanceTextValue = 'МАКСИМАЛЬНАЯ';
+    } else if (GRAPHICS_SETTINGS.particleDensity === 'high' && 
+               GRAPHICS_SETTINGS.screenShake && 
+               GRAPHICS_SETTINGS.frameRateTarget === 0) {
+        performanceLevel = 'high';
+        performanceTextValue = 'ВЫСОКАЯ НАГРУЗКА';
+    }
+    
+    performanceFill.className = `performance-fill ${performanceLevel}`;
+    performanceText.textContent = performanceTextValue;
+}
+
+// Обработчики для пресетов графики
+document.querySelectorAll('.preset-button').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const preset = this.dataset.preset;
+        
+        document.querySelectorAll('.preset-button').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        
+        applyGraphicsPreset(preset);
+        updateGraphicsUI();
+    });
+});
+
+function applyGraphicsPreset(preset) {
+    switch(preset) {
+        case 'low':
+            GRAPHICS_SETTINGS.explosions = true;
+            GRAPHICS_SETTINGS.particleDensity = 'low';
+            GRAPHICS_SETTINGS.screenShake = false;
+            GRAPHICS_SETTINGS.frameRateTarget = 30;
+            break;
+        case 'medium':
+            GRAPHICS_SETTINGS.explosions = true;
+            GRAPHICS_SETTINGS.particleDensity = 'medium';
+            GRAPHICS_SETTINGS.screenShake = true;
+            GRAPHICS_SETTINGS.frameRateTarget = 60;
+            break;
+        case 'high':
+            GRAPHICS_SETTINGS.explosions = true;
+            GRAPHICS_SETTINGS.particleDensity = 'high';
+            GRAPHICS_SETTINGS.screenShake = true;
+            GRAPHICS_SETTINGS.frameRateTarget = 0;
+            break;
+    }
+}
+
+// Обработчики для переключателей графики
+document.querySelectorAll('.toggle-button').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const setting = this.dataset.setting;
+        const value = this.dataset.value;
+        
+        let processedValue = value;
+        if (value === 'true') processedValue = true;
+        if (value === 'false') processedValue = false;
+        if (!isNaN(value) && value !== '') processedValue = Number(value);
+        
+        GRAPHICS_SETTINGS[setting] = processedValue;
+        
+        updateGraphicsUI();
+    });
+});
+
+// Обработчики кнопок графики
+applyGraphics.addEventListener('click', applyGraphicsSettings);
+resetGraphics.addEventListener('click', resetGraphicsSettings);
+
 const keys = {};
 
+// Обработка клавиатуры (только для десктопа)
 window.addEventListener('keydown', (e) => {
+    if (isMobile) return; // Игнорируем клавиатуру на мобильных
+    
     if (e.key.toLowerCase() === 'p') {
         if (!gameOver && !levelCompleteScreen.classList.contains('hidden')) return;
         
@@ -1301,6 +1510,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 window.addEventListener('keyup', (e) => {
+    if (isMobile) return;
     keys[e.key.toLowerCase()] = false;
 });
 
@@ -1328,7 +1538,11 @@ function startGame() {
     pauseScreen.classList.add('hidden');
     levelCompleteScreen.classList.add('hidden');
     
-    // Обновляем интерфейс
+    // Сброс мобильного управления
+    isMoving = false;
+    moveDirection = null;
+    isShooting = false;
+    
     updateUI();
     difficultyBadge.textContent = difficulty.name;
     difficultyBadge.style.background = `linear-gradient(145deg, ${difficulty.color}33, ${difficulty.color}66)`;
@@ -1413,7 +1627,6 @@ function gameLoop(timestamp) {
         return;
     }
     
-    // Throttle updates для стабильного FPS
     const deltaTime = timestamp - lastUpdateTime;
     if (deltaTime < UPDATE_INTERVAL) {
         requestAnimationFrame(gameLoop);
@@ -1421,7 +1634,6 @@ function gameLoop(timestamp) {
     }
     lastUpdateTime = timestamp;
     
-    // Мониторинг FPS
     updateFPS(timestamp);
     
     if (!gameOver && !gamePaused) {
@@ -1447,7 +1659,7 @@ function gameLoop(timestamp) {
             enemy.update(walls, { x: player.x, y: player.y });
         }
         
-        // Оптимизированная проверка коллизий с использованием spatialHash
+        // Обновленная логика коллизий для мобильных устройств
         for (let i = bullets.length - 1; i >= 0; i--) {
             if (!bullets[i].update()) {
                 bullets.splice(i, 1);
@@ -1460,14 +1672,12 @@ function gameLoop(timestamp) {
             for (const obj of nearbyObjects) {
                 if (bullets[i].collidesWith(obj)) {
                     if (obj.destructible) {
-                        // Удаляем разрушаемую стену
                         const wallIndex = walls.indexOf(obj);
                         if (wallIndex > -1) {
                             walls.splice(wallIndex, 1);
                             explosions.push(new EnhancedExplosion(bullets[i].x, bullets[i].y, 0.7));
                         }
                     } else if (!obj.destructible && obj instanceof Wall) {
-                        // Неразрушаемая стена
                         bullets.splice(i, 1);
                         collisionHandled = true;
                         break;
@@ -1512,7 +1722,6 @@ function gameLoop(timestamp) {
             }
             
             if (!collisionHandled && bullets[i]) {
-                // Дополнительная проверка границ
                 if (bullets[i].x < 0 || bullets[i].x > canvas.width || 
                     bullets[i].y < 0 || bullets[i].y > canvas.height) {
                     bullets.splice(i, 1);
@@ -1545,10 +1754,8 @@ function gameLoop(timestamp) {
             }
         }
         
-        // Очистка массивов для оптимизации памяти
         cleanupArrays();
         
-        // Проверка победы на уровне (ИСПРАВЛЕННАЯ ЛОГИКА)
         if (enemies.length === 0 && 
             !gameOver && 
             !gamePaused && 
@@ -1556,7 +1763,6 @@ function gameLoop(timestamp) {
             completeLevel();
         }
         
-        // Оптимизированный рендеринг - рисуем только видимые объекты
         const visibleWalls = walls.filter(wall => isVisible(wall));
         const visibleEnemies = enemies.filter(enemy => isVisible(enemy));
         const visibleBullets = bullets.filter(bullet => isVisible(bullet));
@@ -1587,7 +1793,7 @@ function gameLoop(timestamp) {
         
         for (const notification of bonusNotifications) {
             ctx.fillStyle = `rgba(255, 255, 0, ${notification.life / 120})`;
-            ctx.font = '24px Courier New';
+            ctx.font = '20px Courier New';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(notification.text, notification.x, notification.y);
@@ -1595,7 +1801,7 @@ function gameLoop(timestamp) {
         
         updateUI();
         
-        ctx.restore(); // Восстанавливаем контекст после сотрясения
+        ctx.restore();
     }
     
     requestAnimationFrame(gameLoop);
@@ -1605,25 +1811,57 @@ function gameLoop(timestamp) {
 function init() {
     restartButton.addEventListener('click', restartGame);
     
+    // Инициализация мобильного управления
+    initMobileControls();
+    
     // Устанавливаем сложность по умолчанию
     setDifficulty('normal');
     
-    // Предзагрузка ресурсов (если будут добавлены текстуры)
-    preloadResources().then(() => {
-        console.log('Ресурсы загружены');
-        gameLoop();
-    }).catch(() => {
-        console.log('Игра запущена без дополнительных ресурсов');
-        gameLoop();
-    });
+    // Обработка изменения ориентации экрана
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    
+    // Инициализация графического экрана
+    initGraphicsScreen();
+    
+    gameLoop();
 }
 
-// Функция предзагрузки ресурсов
-function preloadResources() {
-    return new Promise((resolve) => {
-        // Здесь можно добавить предзагрузку изображений, звуков и т.д.
-        setTimeout(resolve, 100); // Имитация загрузки
-    });
+function handleResize() {
+    if (gameScreen.classList.contains('hidden')) return;
+    
+    // Перерисовываем canvas при изменении размера окна
+    setTimeout(() => {
+        if (isMobile) {
+            resizeCanvasForMobile();
+        }
+    }, 100);
+}
+
+// Инициализация графического экрана
+function initGraphicsScreen() {
+    const scrollContainer = document.querySelector('.settings-scroll-container');
+    const scrollIndicator = document.querySelector('.scroll-indicator');
+    
+    if (scrollContainer && scrollIndicator) {
+        scrollContainer.addEventListener('scroll', () => {
+            // Скрываем индикатор после начала прокрутки
+            if (scrollContainer.scrollTop > 10) {
+                scrollIndicator.style.opacity = '0';
+                scrollIndicator.style.transform = 'translateY(-10px)';
+            } else {
+                scrollIndicator.style.opacity = '0.7';
+                scrollIndicator.style.transform = 'translateY(0)';
+            }
+        });
+        
+        // Скрываем индикатор если контент полностью помещается
+        setTimeout(() => {
+            if (scrollContainer.scrollHeight <= scrollContainer.clientHeight) {
+                scrollIndicator.style.display = 'none';
+            }
+        }, 1000);
+    }
 }
 
 window.addEventListener('load', init);

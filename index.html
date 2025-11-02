@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Танчики - Ретро Игра</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -22,7 +22,7 @@
             </div>
             
             <div class="menu-footer">
-                <div class="version">v2.2</div>
+                <div class="version">v2.3</div>
             </div>
         </div>
     </div>
@@ -72,57 +72,59 @@
         <div class="menu-container">
             <h1>НАСТРОЙКИ ГРАФИКИ</h1>
             
-            <div class="settings-container">
-                <div class="setting-group">
-                    <h3>ЭФФЕКТЫ ВЗРЫВОВ</h3>
-                    <div class="toggle-buttons">
-                        <button id="explosionsOn" class="toggle-button active" data-setting="explosions" data-value="true">ВКЛ</button>
-                        <button id="explosionsOff" class="toggle-button" data-setting="explosions" data-value="false">ВЫКЛ</button>
-                    </div>
-                </div>
-                
-                <div class="setting-group">
-                    <h3>ПЛОТНОСТЬ ЧАСТИЦ</h3>
-                    <div class="toggle-buttons">
-                        <button id="particlesLow" class="toggle-button" data-setting="particleDensity" data-value="low">НИЗКАЯ</button>
-                        <button id="particlesMedium" class="toggle-button active" data-setting="particleDensity" data-value="medium">СРЕДНЯЯ</button>
-                        <button id="particlesHigh" class="toggle-button" data-setting="particleDensity" data-value="high">ВЫСОКАЯ</button>
-                    </div>
-                </div>
-                
-                <div class="setting-group">
-                    <h3>СОТРЯСЕНИЕ ЭКРАНА</h3>
-                    <div class="toggle-buttons">
-                        <button id="shakeOn" class="toggle-button active" data-setting="screenShake" data-value="true">ВКЛ</button>
-                        <button id="shakeOff" class="toggle-button" data-setting="screenShake" data-value="false">ВЫКЛ</button>
-                    </div>
-                </div>
-                
-                <div class="setting-group">
-                    <h3>ЧАСТОТА КАДРОВ</h3>
-                    <div class="toggle-buttons">
-                        <button id="fps30" class="toggle-button" data-setting="frameRateTarget" data-value="30">30 FPS</button>
-                        <button id="fps60" class="toggle-button active" data-setting="frameRateTarget" data-value="60">60 FPS</button>
-                        <button id="fpsUnlimited" class="toggle-button" data-setting="frameRateTarget" data-value="0">МАКС.</button>
-                    </div>
-                </div>
-                
-                <div class="setting-group">
-                    <h3>ПРЕСЕТЫ ГРАФИКИ</h3>
-                    <div class="preset-buttons">
-                        <button id="presetLow" class="preset-button" data-preset="low">НИЗКАЯ</button>
-                        <button id="presetMedium" class="preset-button active" data-preset="medium">СРЕДНЯЯ</button>
-                        <button id="presetHigh" class="preset-button" data-preset="high">ВЫСОКАЯ</button>
-                    </div>
-                </div>
-                
-                <div class="performance-info">
-                    <div class="performance-meter">
-                        <div class="performance-label">ПРОИЗВОДИТЕЛЬНОСТЬ:</div>
-                        <div class="performance-bar">
-                            <div id="performanceFill" class="performance-fill medium"></div>
+            <div class="settings-scroll-container">
+                <div class="settings-container">
+                    <div class="setting-group">
+                        <h3>ЭФФЕКТЫ ВЗРЫВОВ</h3>
+                        <div class="toggle-buttons">
+                            <button id="explosionsOn" class="toggle-button active" data-setting="explosions" data-value="true">ВКЛ</button>
+                            <button id="explosionsOff" class="toggle-button" data-setting="explosions" data-value="false">ВЫКЛ</button>
                         </div>
-                        <div id="performanceText" class="performance-text">ОПТИМАЛЬНАЯ</div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <h3>ПЛОТНОСТЬ ЧАСТИЦ</h3>
+                        <div class="toggle-buttons">
+                            <button id="particlesLow" class="toggle-button" data-setting="particleDensity" data-value="low">НИЗКАЯ</button>
+                            <button id="particlesMedium" class="toggle-button active" data-setting="particleDensity" data-value="medium">СРЕДНЯЯ</button>
+                            <button id="particlesHigh" class="toggle-button" data-setting="particleDensity" data-value="high">ВЫСОКАЯ</button>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <h3>СОТРЯСЕНИЕ ЭКРАНА</h3>
+                        <div class="toggle-buttons">
+                            <button id="shakeOn" class="toggle-button active" data-setting="screenShake" data-value="true">ВКЛ</button>
+                            <button id="shakeOff" class="toggle-button" data-setting="screenShake" data-value="false">ВЫКЛ</button>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <h3>ЧАСТОТА КАДРОВ</h3>
+                        <div class="toggle-buttons">
+                            <button id="fps30" class="toggle-button" data-setting="frameRateTarget" data-value="30">30 FPS</button>
+                            <button id="fps60" class="toggle-button active" data-setting="frameRateTarget" data-value="60">60 FPS</button>
+                            <button id="fpsUnlimited" class="toggle-button" data-setting="frameRateTarget" data-value="0">МАКС.</button>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <h3>ПРЕСЕТЫ ГРАФИКИ</h3>
+                        <div class="preset-buttons">
+                            <button id="presetLow" class="preset-button" data-preset="low">НИЗКАЯ</button>
+                            <button id="presetMedium" class="preset-button active" data-preset="medium">СРЕДНЯЯ</button>
+                            <button id="presetHigh" class="preset-button" data-preset="high">ВЫСОКАЯ</button>
+                        </div>
+                    </div>
+                    
+                    <div class="performance-info">
+                        <div class="performance-meter">
+                            <div class="performance-label">ПРОИЗВОДИТЕЛЬНОСТЬ:</div>
+                            <div class="performance-bar">
+                                <div id="performanceFill" class="performance-fill medium"></div>
+                            </div>
+                            <div id="performanceText" class="performance-text">ОПТИМАЛЬНАЯ</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -131,6 +133,11 @@
                 <button id="applyGraphics" class="menu-button">ПРИМЕНИТЬ</button>
                 <button id="resetGraphics" class="menu-button secondary">СБРОСИТЬ</button>
                 <button id="backFromGraphics" class="menu-button secondary">НАЗАД</button>
+            </div>
+            
+            <div class="scroll-indicator">
+                <div class="scroll-arrow">↓</div>
+                <span>Прокрутите для просмотра всех настроек</span>
             </div>
         </div>
     </div>
@@ -161,6 +168,10 @@
                     <span class="control-keys">M</span>
                     <span class="control-description">Вкл/Выкл звук</span>
                 </div>
+                <div class="control-item mobile-controls">
+                    <span class="control-keys">👆 ТАПЫ</span>
+                    <span class="control-description">Управление на мобильных</span>
+                </div>
             </div>
             
             <button id="backFromControls" class="menu-button secondary">НАЗАД</button>
@@ -182,7 +193,8 @@
                     <div class="feature">🤖 Умный ИИ врагов</div>
                     <div class="feature">🔊 Звуковые эффекты</div>
                     <div class="feature">🎨 Настраиваемая графика</div>
-                    <div class="feature">📱 Адаптивный дизайн</div>
+                    <div class="feature">📱 Полная поддержка мобильных устройств</div>
+                    <div class="feature">👆 Сенсорное управление</div>
                 </div>
             </div>
             
@@ -205,6 +217,18 @@
         
         <div class="game-container">
             <canvas id="gameCanvas" width="800" height="600"></canvas>
+            
+            <!-- Мобильные элементы управления -->
+            <div id="mobileControls" class="mobile-controls">
+                <div class="touch-area left-touch-area" id="moveArea"></div>
+                <div class="touch-area right-touch-area" id="shootArea">
+                    <div class="shoot-button">FIRE</div>
+                </div>
+                <div class="mobile-buttons">
+                    <button id="mobilePause" class="mobile-button pause-button">⏸️</button>
+                    <button id="mobileMenu" class="mobile-button menu-button">🏠</button>
+                </div>
+            </div>
             
             <div id="gameOverScreen" class="game-over hidden">
                 <div class="game-over-content">
@@ -242,6 +266,7 @@
         
         <div class="controls">
             <p>УПРАВЛЕНИЕ: WASD - движение, СТРЕЛКИ - наведение и стрельба, P - пауза, M - звук</p>
+            <p class="mobile-only">МОБИЛЬНОЕ УПРАВЛЕНИЕ: ЛЕВАЯ ЧАСТЬ ЭКРАНА - движение, ПРАВАЯ ЧАСТЬ - стрельба</p>
         </div>
     </div>
 

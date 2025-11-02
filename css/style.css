@@ -2,6 +2,10 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 body {
@@ -14,6 +18,7 @@ body {
     justify-content: center;
     min-height: 100vh;
     overflow: hidden;
+    touch-action: manipulation;
 }
 
 .screen {
@@ -26,72 +31,83 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    padding: 10px;
+    overflow: auto;
 }
 
 .hidden {
     display: none !important;
 }
 
-/* Оптимизированные стили главного меню */
+/* Оптимизированные стили главного меню для мобильных */
 .menu-container {
     text-align: center;
-    background: rgba(0, 0, 0, 0.9);
-    padding: 40px;
-    border: 4px solid #0f0;
-    border-radius: 15px;
-    box-shadow: 0 0 40px #0f0;
-    max-width: 600px;
-    width: 90%;
+    background: rgba(0, 0, 0, 0.95);
+    padding: 20px;
+    border: 3px solid #0f0;
+    border-radius: 12px;
+    box-shadow: 0 0 30px #0f0;
+    max-width: 95%;
+    width: 100%;
     backdrop-filter: blur(10px);
     will-change: transform;
-    transform: translateZ(0); /* Включаем аппаратное ускорение */
+    transform: translateZ(0);
+    margin: 10px;
+    max-height: 95vh;
+    overflow-y: auto;
 }
 
 .menu-container h1 {
-    font-size: 4rem;
-    margin-bottom: 10px;
-    text-shadow: 0 0 20px #0f0;
+    font-size: 2.5rem;
+    margin-bottom: 8px;
+    text-shadow: 0 0 15px #0f0;
     color: #0f0;
-    letter-spacing: 4px;
+    letter-spacing: 3px;
     background: linear-gradient(45deg, #0f0, #0a0);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    line-height: 1.2;
 }
 
 .menu-subtitle {
-    font-size: 1.5rem;
-    margin-bottom: 40px;
+    font-size: 1.1rem;
+    margin-bottom: 25px;
     color: #0f0;
-    text-shadow: 0 0 10px #0f0;
+    text-shadow: 0 0 8px #0f0;
     opacity: 0.8;
 }
 
 .menu-buttons {
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    margin-bottom: 40px;
+    gap: 12px;
+    margin-bottom: 25px;
 }
 
 .menu-button {
     background: linear-gradient(145deg, #0a0, #0f0);
     color: #000;
     border: none;
-    padding: 18px 30px;
-    font-size: 1.3rem;
+    padding: 16px 20px;
+    font-size: 1.1rem;
     font-family: 'Courier New', monospace;
     cursor: pointer;
     transition: all 0.3s ease;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    border-radius: 10px;
+    letter-spacing: 1px;
+    border-radius: 8px;
     font-weight: bold;
-    box-shadow: 0 5px 15px rgba(0, 255, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 255, 0, 0.3);
     position: relative;
     overflow: hidden;
     will-change: transform;
     transform: translateZ(0);
+    min-height: 54px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
 }
 
 .menu-button::before {
@@ -105,75 +121,68 @@ body {
     transition: left 0.5s;
 }
 
-.menu-button:hover::before {
+.menu-button:active::before {
     left: 100%;
 }
 
-.menu-button:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0, 255, 0, 0.5);
-    background: linear-gradient(145deg, #0f0, #0a0);
-}
-
 .menu-button:active {
-    transform: translateY(1px);
-    box-shadow: 0 3px 10px rgba(0, 255, 0, 0.3);
+    transform: translateY(2px);
+    box-shadow: 0 2px 6px rgba(0, 255, 0, 0.3);
 }
 
 .menu-button.secondary {
     background: linear-gradient(145deg, #333, #555);
     color: #0f0;
-    box-shadow: 0 5px 15px rgba(0, 255, 0, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 255, 0, 0.2);
 }
 
-.menu-button.secondary:hover {
+.menu-button.secondary:active {
     background: linear-gradient(145deg, #444, #666);
-    box-shadow: 0 8px 25px rgba(0, 255, 0, 0.3);
 }
 
 .menu-footer {
-    margin-top: 20px;
+    margin-top: 15px;
 }
 
 .version {
     color: #0f0;
-    font-size: 1rem;
+    font-size: 0.9rem;
     opacity: 0.7;
 }
 
-/* Оптимизированные стили экрана выбора сложности */
+/* Адаптивные стили экрана выбора сложности */
 .difficulty-buttons {
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    margin: 30px 0;
+    gap: 12px;
+    margin: 20px 0;
 }
 
 .difficulty-button {
-    background: rgba(0, 255, 0, 0.1);
+    background: rgba(0, 255, 0, 0.08);
     border: 2px solid #0f0;
-    padding: 20px;
-    border-radius: 10px;
+    padding: 16px;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
     text-align: left;
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 4px;
     will-change: transform;
     transform: translateZ(0);
+    touch-action: manipulation;
 }
 
-.difficulty-button:hover {
-    background: rgba(0, 255, 0, 0.2);
-    transform: translateX(10px);
-    box-shadow: 0 5px 15px rgba(0, 255, 0, 0.3);
+.difficulty-button:active {
+    background: rgba(0, 255, 0, 0.15);
+    transform: translateX(5px);
 }
 
 .difficulty-button.active {
     background: linear-gradient(145deg, #0a0, #0f0);
     border-color: #0f0;
-    box-shadow: 0 5px 20px rgba(0, 255, 0, 0.4);
+    box-shadow: 0 4px 15px rgba(0, 255, 0, 0.4);
 }
 
 .difficulty-button.active .difficulty-title {
@@ -187,34 +196,35 @@ body {
 }
 
 .difficulty-title {
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     color: #0f0;
     font-weight: bold;
 }
 
 .difficulty-description {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: #0f0;
     opacity: 0.7;
 }
 
 .difficulty-info {
-    margin: 20px 0;
+    margin: 15px 0;
 }
 
 .difficulty-stats {
     background: rgba(0, 255, 0, 0.05);
     border: 1px solid #0f0;
-    border-radius: 10px;
-    padding: 20px;
+    border-radius: 8px;
+    padding: 15px;
 }
 
 .stat {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 10px;
-    padding-bottom: 10px;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
     border-bottom: 1px solid rgba(0, 255, 0, 0.2);
+    font-size: 0.9rem;
 }
 
 .stat:last-child {
@@ -232,48 +242,87 @@ body {
     font-weight: bold;
 }
 
-/* Стили для экрана настроек графики */
+/* Стили для экрана настроек графики с прокруткой */
+.settings-scroll-container {
+    max-height: 50vh;
+    overflow-y: auto;
+    margin: 15px 0;
+    padding-right: 8px;
+    border: 1px solid rgba(0, 255, 0, 0.3);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.7);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 255, 0, 0.5) rgba(0, 0, 0, 0.1);
+    -webkit-overflow-scrolling: touch;
+}
+
+.settings-scroll-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.settings-scroll-container::-webkit-scrollbar-track {
+    background: rgba(0, 255, 0, 0.1);
+    border-radius: 3px;
+}
+
+.settings-scroll-container::-webkit-scrollbar-thumb {
+    background: rgba(0, 255, 0, 0.5);
+    border-radius: 3px;
+}
+
+.settings-scroll-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 255, 0, 0.7);
+}
+
 .settings-container {
-    margin: 30px 0;
+    padding: 8px;
     text-align: left;
 }
 
 .setting-group {
-    margin-bottom: 25px;
-    padding: 15px;
+    margin-bottom: 16px;
+    padding: 12px;
     background: rgba(0, 255, 0, 0.05);
     border: 1px solid #0f0;
-    border-radius: 10px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    touch-action: manipulation;
+}
+
+.setting-group:active {
+    background: rgba(0, 255, 0, 0.08);
 }
 
 .setting-group h3 {
     color: #0f0;
-    margin-bottom: 15px;
-    font-size: 1.1rem;
+    margin-bottom: 12px;
+    font-size: 1rem;
 }
 
 .toggle-buttons {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     flex-wrap: wrap;
 }
 
 .toggle-button {
     flex: 1;
-    min-width: 100px;
+    min-width: 80px;
     background: rgba(0, 255, 0, 0.1);
     border: 2px solid #0f0;
     color: #0f0;
-    padding: 10px 15px;
-    border-radius: 8px;
+    padding: 10px 12px;
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.3s ease;
     font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    touch-action: manipulation;
 }
 
-.toggle-button:hover {
+.toggle-button:active {
     background: rgba(0, 255, 0, 0.2);
-    transform: translateY(-2px);
+    transform: translateY(-1px);
 }
 
 .toggle-button.active {
@@ -284,12 +333,12 @@ body {
 }
 
 .preset-buttons {
-    display: flex;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
 }
 
 .preset-button {
-    flex: 1;
     padding: 12px 15px;
     background: rgba(0, 255, 0, 0.1);
     border: 2px solid #0f0;
@@ -299,59 +348,60 @@ body {
     transition: all 0.3s ease;
     font-family: 'Courier New', monospace;
     font-weight: bold;
+    text-align: center;
+    touch-action: manipulation;
 }
 
-.preset-button:hover {
+.preset-button:active {
     background: rgba(0, 255, 0, 0.2);
-    transform: translateY(-2px);
+    transform: translateY(-1px);
 }
 
 .preset-button.active {
     background: linear-gradient(145deg, #0a0, #0f0);
     color: #000;
-    box-shadow: 0 0 15px #0f0;
+    box-shadow: 0 0 12px #0f0;
 }
 
 #presetLow.active {
     background: linear-gradient(145deg, #ff4444, #ff0000);
     border-color: #ff0000;
-    box-shadow: 0 0 15px #ff0000;
+    box-shadow: 0 0 12px #ff0000;
 }
 
 #presetHigh.active {
     background: linear-gradient(145deg, #00ff00, #00cc00);
     border-color: #00ff00;
-    box-shadow: 0 0 15px #00ff00;
+    box-shadow: 0 0 12px #00ff00;
 }
 
 .performance-info {
-    margin-top: 20px;
-    padding: 15px;
+    margin-top: 16px;
+    padding: 16px;
     background: rgba(0, 0, 0, 0.5);
     border-radius: 8px;
+    border: 1px solid rgba(0, 255, 0, 0.3);
 }
 
 .performance-meter {
     display: flex;
-    align-items: center;
-    gap: 15px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .performance-label {
     color: #0f0;
     font-weight: bold;
-    min-width: 180px;
+    text-align: center;
 }
 
 .performance-bar {
-    flex: 1;
-    height: 20px;
+    height: 16px;
     background: rgba(0, 255, 0, 0.1);
     border: 1px solid #0f0;
-    border-radius: 10px;
+    border-radius: 8px;
     overflow: hidden;
-    min-width: 200px;
+    position: relative;
 }
 
 .performance-fill {
@@ -377,85 +427,77 @@ body {
 .performance-text {
     color: #0f0;
     font-weight: bold;
-    min-width: 120px;
-    text-align: right;
+    text-align: center;
 }
 
 .settings-buttons {
     display: flex;
-    gap: 15px;
+    flex-direction: column;
+    gap: 10px;
     justify-content: center;
-    flex-wrap: wrap;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(0, 255, 0, 0.3);
 }
 
-/* Оптимизированные стили экрана управления */
-.controls-list {
-    margin: 30px 0;
-    text-align: left;
-}
-
-.control-item {
+/* Индикатор прокрутки */
+.scroll-indicator {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 15px 0;
-    border-bottom: 1px solid #333;
-}
-
-.control-keys {
-    background: rgba(0, 255, 0, 0.1);
-    padding: 8px 15px;
-    border: 1px solid #0f0;
-    border-radius: 5px;
-    font-weight: bold;
-    min-width: 120px;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 8px;
+    color: #0f0;
+    font-size: 0.75rem;
+    opacity: 0.7;
+    animation: pulse 2s infinite;
     text-align: center;
 }
 
-.control-description {
-    flex: 1;
-    text-align: right;
-    color: #0f0;
+.scroll-arrow {
+    animation: bounce 2s infinite;
 }
 
-/* Оптимизированные стили экрана об игре */
-.about-content {
-    margin: 30px 0;
-    text-align: left;
-    line-height: 1.6;
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-3px);
+    }
+    60% {
+        transform: translateY(-2px);
+    }
 }
 
-.about-content p {
-    margin-bottom: 20px;
-    color: #0f0;
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.7;
+    }
+    50% {
+        opacity: 1;
+    }
 }
 
-.features-list {
-    margin-top: 30px;
-}
-
-.feature {
-    padding: 10px 0;
-    border-bottom: 1px solid #333;
-    color: #0f0;
-}
-
-/* Оптимизированные стили игрового экрана */
+/* Адаптивные стили игрового экрана */
 .game-header {
     width: 100%;
-    max-width: 800px;
-    margin-bottom: 10px;
+    max-width: 100%;
+    margin-bottom: 8px;
 }
 
 .game-container {
     position: relative;
-    width: 800px;
-    height: 600px;
-    border: 4px solid #0f0;
-    box-shadow: 0 0 20px #0f0;
+    width: 100%;
+    max-width: 800px;
+    height: 60vh;
+    border: 3px solid #0f0;
+    box-shadow: 0 0 15px #0f0;
     overflow: hidden;
     background-color: #000;
-    border-radius: 10px;
+    border-radius: 8px;
+    touch-action: none;
 }
 
 canvas {
@@ -464,27 +506,31 @@ canvas {
     height: 100%;
     image-rendering: -webkit-optimize-contrast;
     image-rendering: pixelated;
+    touch-action: none;
 }
 
 .info-panel {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
     width: 100%;
-    padding: 15px;
+    padding: 10px;
     background-color: rgba(0, 0, 0, 0.9);
     border: 2px solid #0f0;
-    border-radius: 10px;
-    flex-wrap: wrap;
-    gap: 10px;
+    border-radius: 8px;
 }
 
 .info-item {
-    font-size: 1.1rem;
+    font-size: 0.9rem;
     color: #0f0;
-    padding: 5px 10px;
+    padding: 4px 6px;
     background: rgba(0, 255, 0, 0.1);
-    border-radius: 5px;
+    border-radius: 4px;
     border: 1px solid #0f0;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 #difficultyBadge {
@@ -497,67 +543,118 @@ canvas {
     cursor: pointer;
     user-select: none;
     transition: all 0.3s ease;
+    touch-action: manipulation;
 }
 
-.sound-toggle:hover {
+.sound-toggle:active {
     background: rgba(0, 255, 0, 0.2);
-    transform: scale(1.05);
+    transform: scale(0.95);
 }
 
 .controls {
     width: 100%;
-    max-width: 800px;
-    margin-top: 10px;
-    padding: 15px;
+    max-width: 100%;
+    margin-top: 8px;
+    padding: 10px;
     background-color: rgba(0, 0, 0, 0.9);
     border: 2px solid #0f0;
     text-align: center;
     color: #0f0;
-    border-radius: 10px;
-}
-
-/* Оптимизированные стили игровых кнопок */
-.game-button {
-    background: linear-gradient(145deg, #0a0, #0f0);
-    color: #000;
-    border: none;
-    padding: 15px 25px;
-    font-size: 1.2rem;
-    font-family: 'Courier New', monospace;
-    cursor: pointer;
-    transition: all 0.3s ease;
     border-radius: 8px;
+    font-size: 0.8rem;
+}
+
+.mobile-only {
+    display: none;
+}
+
+/* Мобильные элементы управления */
+.mobile-controls {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.touch-area {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 50%;
+    pointer-events: auto;
+}
+
+.left-touch-area {
+    left: 0;
+    /* background: rgba(0, 255, 0, 0.1); */ /* Для отладки */
+}
+
+.right-touch-area {
+    right: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    padding: 20px;
+    /* background: rgba(255, 0, 0, 0.1); */ /* Для отладки */
+}
+
+.shoot-button {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(145deg, #ff4444, #ff0000);
+    border: 3px solid #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
     font-weight: bold;
-    box-shadow: 0 4px 12px rgba(0, 255, 0, 0.3);
-    margin: 5px;
-    min-width: 200px;
-    will-change: transform;
-    transform: translateZ(0);
+    font-size: 0.9rem;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    box-shadow: 0 4px 15px rgba(255, 0, 0, 0.5);
+    pointer-events: auto;
+    touch-action: manipulation;
+    user-select: none;
 }
 
-.game-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 255, 0, 0.5);
-    background: linear-gradient(145deg, #0f0, #0a0);
+.shoot-button:active {
+    transform: scale(0.9);
+    box-shadow: 0 2px 8px rgba(255, 0, 0, 0.5);
 }
 
-.game-button:active {
-    transform: translateY(1px);
-    box-shadow: 0 2px 8px rgba(0, 255, 0, 0.3);
+.mobile-buttons {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 8px;
+    pointer-events: auto;
 }
 
-.game-button.secondary {
-    background: linear-gradient(145deg, #333, #555);
+.mobile-button {
+    width: 44px;
+    height: 44px;
+    border: 2px solid #0f0;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.7);
     color: #0f0;
-    box-shadow: 0 4px 12px rgba(0, 255, 0, 0.2);
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    touch-action: manipulation;
 }
 
-.game-button.secondary:hover {
-    background: linear-gradient(145deg, #444, #666);
-    box-shadow: 0 6px 20px rgba(0, 255, 0, 0.3);
+.mobile-button:active {
+    background: rgba(0, 255, 0, 0.2);
+    transform: scale(0.95);
 }
 
-/* Оптимизированные стили экранов паузы и завершения игры */
+/* Стили экранов паузы и завершения игры */
 .game-over, .pause-screen, .level-complete {
     position: absolute;
     top: 0;
@@ -571,69 +668,102 @@ canvas {
     justify-content: center;
     z-index: 10;
     backdrop-filter: blur(5px);
+    padding: 20px;
 }
 
 .game-over-content, .pause-content, .level-complete-content {
     background: rgba(0, 0, 0, 0.9);
-    padding: 40px;
-    border: 4px solid #f00;
-    border-radius: 15px;
+    padding: 25px;
+    border: 3px solid #f00;
+    border-radius: 12px;
     text-align: center;
-    box-shadow: 0 0 40px #f00;
-    max-width: 500px;
-    width: 90%;
+    box-shadow: 0 0 30px #f00;
+    max-width: 95%;
+    width: 100%;
 }
 
 .pause-content {
     border-color: #ff0;
-    box-shadow: 0 0 40px #ff0;
+    box-shadow: 0 0 30px #ff0;
 }
 
 .level-complete-content {
     border-color: #0f0;
-    box-shadow: 0 0 40px #0f0;
+    box-shadow: 0 0 30px #0f0;
 }
 
 .game-over h1, .pause-screen h1, .level-complete h1 {
-    font-size: 3rem;
+    font-size: 2rem;
     color: #f00;
-    margin-bottom: 20px;
-    text-shadow: 0 0 10px #f00;
+    margin-bottom: 15px;
+    text-shadow: 0 0 8px #f00;
+    line-height: 1.2;
 }
 
 .pause-screen h1 {
     color: #ff0;
-    text-shadow: 0 0 10px #ff0;
+    text-shadow: 0 0 8px #ff0;
 }
 
 .level-complete h1 {
     color: #0f0;
-    text-shadow: 0 0 10px #0f0;
+    text-shadow: 0 0 8px #0f0;
 }
 
 .final-score, .level-stats {
-    font-size: 1.5rem;
-    margin-bottom: 30px;
+    font-size: 1.2rem;
+    margin-bottom: 20px;
     color: #fff;
 }
 
 .level-stat {
-    margin: 10px 0;
+    margin: 8px 0;
     color: #0f0;
 }
 
 .game-over-buttons, .pause-buttons {
     display: flex;
-    gap: 15px;
+    flex-direction: column;
+    gap: 10px;
     justify-content: center;
-    flex-wrap: wrap;
+}
+
+.game-button {
+    background: linear-gradient(145deg, #0a0, #0f0);
+    color: #000;
+    border: none;
+    padding: 14px 20px;
+    font-size: 1.1rem;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(0, 255, 0, 0.3);
+    margin: 4px;
+    min-width: auto;
+    width: 100%;
+    will-change: transform;
+    transform: translateZ(0);
+    touch-action: manipulation;
+}
+
+.game-button:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 6px rgba(0, 255, 0, 0.3);
+}
+
+.game-button.secondary {
+    background: linear-gradient(145deg, #333, #555);
+    color: #0f0;
+    box-shadow: 0 4px 12px rgba(0, 255, 0, 0.2);
 }
 
 /* Анимации для эффектов */
 @keyframes screenShake {
     0%, 100% { transform: translateX(0) translateY(0); }
-    10%, 30%, 50%, 70%, 90% { transform: translateX(-2px) translateY(-2px); }
-    20%, 40%, 60%, 80% { transform: translateX(2px) translateY(2px); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-1px) translateY(-1px); }
+    20%, 40%, 60%, 80% { transform: translateX(1px) translateY(1px); }
 }
 
 .screen-shake {
@@ -649,87 +779,56 @@ canvas {
     animation: lightFlash 0.3s ease-out;
 }
 
-/* Адаптивность для мобильных устройств */
-@media (max-width: 850px) {
-    .menu-container {
-        padding: 20px;
+/* Медиа-запросы для различных устройств */
+@media (max-width: 768px) {
+    .mobile-only {
+        display: block;
     }
     
-    .menu-container h1 {
-        font-size: 2.5rem;
-    }
-    
-    .game-container {
-        width: 95vw;
-        height: 70vh;
-        max-width: 600px;
-        max-height: 450px;
-    }
-    
-    .info-panel {
-        flex-direction: column;
-        align-items: center;
-    }
-    
-    .game-over-buttons, .pause-buttons {
-        flex-direction: column;
-    }
-    
-    .control-item {
-        flex-direction: column;
-        gap: 10px;
-        text-align: center;
-    }
-    
-    .difficulty-button {
-        padding: 15px;
-    }
-    
-    .toggle-buttons {
-        flex-direction: column;
-    }
-    
-    .preset-buttons {
-        flex-direction: column;
-    }
-    
-    .performance-meter {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .performance-label {
-        min-width: auto;
-        text-align: center;
-    }
-    
-    .performance-text {
-        text-align: center;
-        min-width: auto;
-    }
-}
-
-@media (max-width: 480px) {
-    .menu-container {
-        background: rgba(0, 0, 0, 0.95); /* Упрощаем градиент для мобильных */
+    .desktop-only {
+        display: none;
     }
     
     .menu-container h1 {
         font-size: 2rem;
     }
     
-    .menu-button, .game-button {
-        padding: 12px 20px;
+    .menu-button {
+        padding: 14px 18px;
         font-size: 1rem;
-        min-width: 150px;
+        min-height: 50px;
+    }
+    
+    .game-container {
+        height: 55vh;
+    }
+    
+    .info-panel {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+        padding: 8px;
     }
     
     .info-item {
-        font-size: 0.9rem;
+        font-size: 0.8rem;
+        padding: 3px 4px;
     }
     
-    .controls p {
+    .controls {
+        font-size: 0.75rem;
+        padding: 8px;
+    }
+    
+    .shoot-button {
+        width: 70px;
+        height: 70px;
         font-size: 0.8rem;
+    }
+    
+    .mobile-button {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
     }
     
     .game-over-content, .pause-content, .level-complete-content {
@@ -737,34 +836,205 @@ canvas {
     }
     
     .game-over h1, .pause-screen h1, .level-complete h1 {
-        font-size: 2rem;
+        font-size: 1.8rem;
     }
 }
 
-/* Оптимизации для устройств с ограниченными ресурсами */
-@media (max-width: 768px) and (orientation: landscape) {
+@media (max-width: 480px) {
+    .menu-container {
+        padding: 15px;
+        margin: 5px;
+    }
+    
+    .menu-container h1 {
+        font-size: 1.8rem;
+    }
+    
+    .menu-subtitle {
+        font-size: 1rem;
+        margin-bottom: 20px;
+    }
+    
+    .menu-buttons {
+        gap: 8px;
+    }
+    
+    .menu-button {
+        padding: 12px 16px;
+        font-size: 0.9rem;
+        min-height: 46px;
+    }
+    
     .game-container {
-        height: 85vh;
-        max-height: 400px;
+        height: 50vh;
     }
     
     .info-panel {
-        padding: 10px;
+        grid-template-columns: repeat(2, 1fr);
     }
     
     .info-item {
+        font-size: 0.75rem;
+    }
+    
+    .shoot-button {
+        width: 60px;
+        height: 60px;
+        font-size: 0.75rem;
+    }
+    
+    .mobile-button {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+    }
+    
+    .right-touch-area {
+        padding: 15px;
+    }
+    
+    .mobile-buttons {
+        top: 8px;
+        right: 8px;
+        gap: 6px;
+    }
+    
+    .settings-scroll-container {
+        max-height: 45vh;
+    }
+    
+    .setting-group {
+        padding: 10px;
+        margin-bottom: 12px;
+    }
+    
+    .toggle-button {
+        min-width: 70px;
+        padding: 8px 10px;
         font-size: 0.8rem;
-        padding: 3px 6px;
+    }
+    
+    .game-button {
+        padding: 12px 16px;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 360px) {
+    .menu-container h1 {
+        font-size: 1.6rem;
+    }
+    
+    .menu-button {
+        padding: 10px 14px;
+        font-size: 0.85rem;
+    }
+    
+    .game-container {
+        height: 45vh;
+    }
+    
+    .info-panel {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .info-item {
+        font-size: 0.7rem;
+    }
+    
+    .shoot-button {
+        width: 55px;
+        height: 55px;
+    }
+}
+
+/* Портретная ориентация */
+@media (max-height: 600px) and (orientation: portrait) {
+    .game-container {
+        height: 50vh;
+    }
+    
+    .menu-container {
+        max-height: 90vh;
+    }
+}
+
+/* Ландшафтная ориентация */
+@media (max-height: 500px) and (orientation: landscape) {
+    .screen {
+        padding: 5px;
+    }
+    
+    .menu-container {
+        max-height: 95vh;
+        padding: 15px;
+    }
+    
+    .menu-buttons {
+        gap: 6px;
+        margin-bottom: 15px;
+    }
+    
+    .menu-button {
+        padding: 8px 12px;
+        min-height: 40px;
+        font-size: 0.9rem;
+    }
+    
+    .game-container {
+        height: 80vh;
+    }
+    
+    .info-panel {
+        grid-template-columns: repeat(6, 1fr);
+    }
+}
+
+/* Поддержка устройств с вырезом (notch) */
+@supports(padding: max(0px)) {
+    .screen {
+        padding-left: max(10px, env(safe-area-inset-left));
+        padding-right: max(10px, env(safe-area-inset-right));
+        padding-top: max(10px, env(safe-area-inset-top));
+        padding-bottom: max(10px, env(safe-area-inset-bottom));
+    }
+}
+
+/* Улучшения для iOS */
+@supports (-webkit-touch-callout: none) {
+    .menu-button, .game-button, .toggle-button, .preset-button {
+        -webkit-touch-callout: none;
+    }
+    
+    .game-container {
+        height: 65vh;
+    }
+}
+
+/* Улучшения для Android */
+@supports not (-webkit-touch-callout: none) {
+    .menu-button:active, .game-button:active, .toggle-button:active, .preset-button:active {
+        transition: none;
     }
 }
 
 /* Отключение анимаций для пользователей, предпочитающих reduced motion */
 @media (prefers-reduced-motion: reduce) {
-    .menu-button, .game-button, .difficulty-button, .toggle-button, .preset-button {
+    .menu-button, .game-button, .difficulty-button, .toggle-button, .preset-button, .mobile-button, .shoot-button {
         transition: none;
     }
     
     .menu-button::before {
         display: none;
+    }
+    
+    .scroll-indicator, .scroll-arrow {
+        animation: none;
+    }
+    
+    .setting-group {
+        animation: none;
+        opacity: 1;
+        transform: none;
     }
 }

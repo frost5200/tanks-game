@@ -7,47 +7,245 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>ТАНЧИКИ - РЕТРО ВЕРСИЯ</h1>
-        
-        <div class="info-panel">
-            <div class="info-item">ОЧКИ: <span id="score">0</span></div>
-            <div class="info-item">ЖИЗНИ: <span id="lives">3</span></div>
-            <div class="info-item">УРОВЕНЬ: <span id="level">1</span></div>
-            <div class="info-item">ВРАГОВ: <span id="enemies">5</span></div>
+    <!-- Главное меню -->
+    <div id="mainMenu" class="screen">
+        <div class="menu-container">
+            <h1>ТАНЧИКИ</h1>
+            <div class="menu-subtitle">РЕТРО ВЕРСИЯ</div>
+            
+            <div class="menu-buttons">
+                <button id="startButton" class="menu-button">НАЧАТЬ ИГРУ</button>
+                <button id="difficultyButton" class="menu-button">УРОВЕНЬ СЛОЖНОСТИ</button>
+                <button id="graphicsButton" class="menu-button">НАСТРОЙКИ ГРАФИКИ</button>
+                <button id="controlsButton" class="menu-button">УПРАВЛЕНИЕ</button>
+                <button id="aboutButton" class="menu-button">ОБ ИГРЕ</button>
+            </div>
+            
+            <div class="menu-footer">
+                <div class="version">v2.2</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Экран выбора сложности -->
+    <div id="difficultyScreen" class="screen hidden">
+        <div class="menu-container">
+            <h1>ВЫБЕРИТЕ СЛОЖНОСТЬ</h1>
+            
+            <div class="difficulty-buttons">
+                <button id="easyButton" class="difficulty-button" data-difficulty="easy">
+                    <span class="difficulty-title">ЛЁГКАЯ</span>
+                    <span class="difficulty-description">Медленные враги, много бонусов</span>
+                </button>
+                
+                <button id="normalButton" class="difficulty-button active" data-difficulty="normal">
+                    <span class="difficulty-title">НОРМАЛЬНАЯ</span>
+                    <span class="difficulty-description">Стандартная сложность</span>
+                </button>
+                
+                <button id="hardButton" class="difficulty-button" data-difficulty="hard">
+                    <span class="difficulty-title">СЛОЖНАЯ</span>
+                    <span class="difficulty-description">Быстрые враги, меньше бонусов</span>
+                </button>
+                
+                <button id="expertButton" class="difficulty-button" data-difficulty="expert">
+                    <span class="difficulty-title">ЭКСПЕРТ</span>
+                    <span class="difficulty-description">Только для настоящих героев!</span>
+                </button>
+            </div>
+            
+            <div class="difficulty-info">
+                <div id="difficultyStats" class="difficulty-stats">
+                    <div class="stat"><span class="stat-label">Скорость врагов:</span> <span id="enemySpeedStat" class="stat-value">1.5x</span></div>
+                    <div class="stat"><span class="stat-label">Частота выстрелов:</span> <span id="enemyShootStat" class="stat-value">2%</span></div>
+                    <div class="stat"><span class="stat-label">Количество врагов:</span> <span id="enemyCountStat" class="stat-value">5</span></div>
+                    <div class="stat"><span class="stat-label">Шанс бонусов:</span> <span id="bonusChanceStat" class="stat-value">30%</span></div>
+                </div>
+            </div>
+            
+            <button id="backFromDifficulty" class="menu-button secondary">НАЗАД</button>
+        </div>
+    </div>
+
+    <!-- Экран настроек графики -->
+    <div id="graphicsScreen" class="screen hidden">
+        <div class="menu-container">
+            <h1>НАСТРОЙКИ ГРАФИКИ</h1>
+            
+            <div class="settings-container">
+                <div class="setting-group">
+                    <h3>ЭФФЕКТЫ ВЗРЫВОВ</h3>
+                    <div class="toggle-buttons">
+                        <button id="explosionsOn" class="toggle-button active" data-setting="explosions" data-value="true">ВКЛ</button>
+                        <button id="explosionsOff" class="toggle-button" data-setting="explosions" data-value="false">ВЫКЛ</button>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <h3>ПЛОТНОСТЬ ЧАСТИЦ</h3>
+                    <div class="toggle-buttons">
+                        <button id="particlesLow" class="toggle-button" data-setting="particleDensity" data-value="low">НИЗКАЯ</button>
+                        <button id="particlesMedium" class="toggle-button active" data-setting="particleDensity" data-value="medium">СРЕДНЯЯ</button>
+                        <button id="particlesHigh" class="toggle-button" data-setting="particleDensity" data-value="high">ВЫСОКАЯ</button>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <h3>СОТРЯСЕНИЕ ЭКРАНА</h3>
+                    <div class="toggle-buttons">
+                        <button id="shakeOn" class="toggle-button active" data-setting="screenShake" data-value="true">ВКЛ</button>
+                        <button id="shakeOff" class="toggle-button" data-setting="screenShake" data-value="false">ВЫКЛ</button>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <h3>ЧАСТОТА КАДРОВ</h3>
+                    <div class="toggle-buttons">
+                        <button id="fps30" class="toggle-button" data-setting="frameRateTarget" data-value="30">30 FPS</button>
+                        <button id="fps60" class="toggle-button active" data-setting="frameRateTarget" data-value="60">60 FPS</button>
+                        <button id="fpsUnlimited" class="toggle-button" data-setting="frameRateTarget" data-value="0">МАКС.</button>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <h3>ПРЕСЕТЫ ГРАФИКИ</h3>
+                    <div class="preset-buttons">
+                        <button id="presetLow" class="preset-button" data-preset="low">НИЗКАЯ</button>
+                        <button id="presetMedium" class="preset-button active" data-preset="medium">СРЕДНЯЯ</button>
+                        <button id="presetHigh" class="preset-button" data-preset="high">ВЫСОКАЯ</button>
+                    </div>
+                </div>
+                
+                <div class="performance-info">
+                    <div class="performance-meter">
+                        <div class="performance-label">ПРОИЗВОДИТЕЛЬНОСТЬ:</div>
+                        <div class="performance-bar">
+                            <div id="performanceFill" class="performance-fill medium"></div>
+                        </div>
+                        <div id="performanceText" class="performance-text">ОПТИМАЛЬНАЯ</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="settings-buttons">
+                <button id="applyGraphics" class="menu-button">ПРИМЕНИТЬ</button>
+                <button id="resetGraphics" class="menu-button secondary">СБРОСИТЬ</button>
+                <button id="backFromGraphics" class="menu-button secondary">НАЗАД</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Экран управления -->
+    <div id="controlsScreen" class="screen hidden">
+        <div class="menu-container">
+            <h1>УПРАВЛЕНИЕ</h1>
+            
+            <div class="controls-list">
+                <div class="control-item">
+                    <span class="control-keys">W A S D</span>
+                    <span class="control-description">Движение танка</span>
+                </div>
+                <div class="control-item">
+                    <span class="control-keys">СТРЕЛКИ</span>
+                    <span class="control-description">Наведение и стрельба</span>
+                </div>
+                <div class="control-item">
+                    <span class="control-keys">P</span>
+                    <span class="control-description">Пауза</span>
+                </div>
+                <div class="control-item">
+                    <span class="control-keys">R</span>
+                    <span class="control-description">Перезапуск</span>
+                </div>
+                <div class="control-item">
+                    <span class="control-keys">M</span>
+                    <span class="control-description">Вкл/Выкл звук</span>
+                </div>
+            </div>
+            
+            <button id="backFromControls" class="menu-button secondary">НАЗАД</button>
+        </div>
+    </div>
+
+    <!-- Экран информации об игре -->
+    <div id="aboutScreen" class="screen hidden">
+        <div class="menu-container">
+            <h1>ОБ ИГРЕ</h1>
+            
+            <div class="about-content">
+                <p>Классическая игра "Танчики" в ретро-стиле!</p>
+                <p>Уничтожайте вражеские танки, собирайте бонусы и пройдите все уровни!</p>
+                
+                <div class="features-list">
+                    <div class="feature">🎮 4 уровня сложности</div>
+                    <div class="feature">💥 Система бонусов и улучшений</div>
+                    <div class="feature">🤖 Умный ИИ врагов</div>
+                    <div class="feature">🔊 Звуковые эффекты</div>
+                    <div class="feature">🎨 Настраиваемая графика</div>
+                    <div class="feature">📱 Адаптивный дизайн</div>
+                </div>
+            </div>
+            
+            <button id="backFromAbout" class="menu-button secondary">НАЗАД</button>
+        </div>
+    </div>
+
+    <!-- Игровой экран -->
+    <div id="gameScreen" class="screen hidden">
+        <div class="game-header">
+            <div class="info-panel">
+                <div class="info-item">ОЧКИ: <span id="score">0</span></div>
+                <div class="info-item">ЖИЗНИ: <span id="lives">3</span></div>
+                <div class="info-item">УРОВЕНЬ: <span id="level">1</span></div>
+                <div class="info-item">ВРАГОВ: <span id="enemies">5</span></div>
+                <div class="info-item">СЛОЖНОСТЬ: <span id="difficultyBadge">НОРМАЛЬНАЯ</span></div>
+                <div class="info-item sound-toggle" id="soundToggle">🔊 ЗВУК: ВКЛ</div>
+            </div>
         </div>
         
         <div class="game-container">
-            <canvas id="gameCanvas"></canvas>
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
             
             <div id="gameOverScreen" class="game-over hidden">
-                <h1>ИГРА ОКОНЧЕНА</h1>
-                <p>Финальный счет: <span id="finalScore">0</span></p>
-                <button id="restartButton">ЗАПУСТИТЬ ЗАНОВО</button>
+                <div class="game-over-content">
+                    <h1>ИГРА ОКОНЧЕНА</h1>
+                    <div class="final-score">Финальный счет: <span id="finalScore">0</span></div>
+                    <div class="game-over-buttons">
+                        <button id="restartButton" class="game-button primary">🎮 ИГРАТЬ СНОВА</button>
+                        <button id="menuButton" class="game-button secondary">🏠 ГЛАВНОЕ МЕНЮ</button>
+                    </div>
+                </div>
             </div>
             
             <div id="pauseScreen" class="pause-screen hidden">
-                <h1>ПАУЗА</h1>
-                <p>Нажмите P для продолжения</p>
+                <div class="pause-content">
+                    <h1>ПАУЗА</h1>
+                    <p>Нажмите P для продолжения</p>
+                    <div class="pause-buttons">
+                        <button id="continueButton" class="game-button primary">▶ ПРОДОЛЖИТЬ</button>
+                        <button id="menuFromPauseButton" class="game-button secondary">🏠 ГЛАВНОЕ МЕНЮ</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="levelCompleteScreen" class="level-complete hidden">
+                <div class="level-complete-content">
+                    <h1>УРОВЕНЬ <span id="completedLevel">1</span> ПРОЙДЕН!</h1>
+                    <div class="level-stats">
+                        <div class="level-stat">Получено очков: <span id="levelScore">500</span></div>
+                        <div class="level-stat">+1 жизнь</div>
+                    </div>
+                    <button id="nextLevelButton" class="game-button primary">ДАЛЕЕ ▶</button>
+                </div>
             </div>
         </div>
         
         <div class="controls">
-            <p>УПРАВЛЕНИЕ: WASD - движение, СТРЕЛКИ - наведение и стрельба, P - пауза, R - перезапуск</p>
+            <p>УПРАВЛЕНИЕ: WASD - движение, СТРЕЛКИ - наведение и стрельба, P - пауза, M - звук</p>
         </div>
     </div>
 
-    <!-- Звуковые эффекты -->
-    <audio id="shootSound" preload="auto">
-        <source src="assets/sounds/shoot.mp3" type="audio/mpeg">
-    </audio>
-    <audio id="explosionSound" preload="auto">
-        <source src="assets/sounds/explosion.mp3" type="audio/mpeg">
-    </audio>
-    <audio id="bonusSound" preload="auto">
-        <source src="assets/sounds/bonus.mp3" type="audio/mpeg">
-    </audio>
-
+    <script src="js/sounds.js"></script>
     <script src="js/game.js"></script>
 </body>
 </html>

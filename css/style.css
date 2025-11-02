@@ -5,7 +5,7 @@
 }
 
 body {
-    background-color: #000;
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
     color: #0f0;
     font-family: 'Courier New', monospace;
     display: flex;
@@ -14,85 +14,587 @@ body {
     justify-content: center;
     min-height: 100vh;
     overflow: hidden;
-    padding: 20px;
 }
 
-.container {
+.screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    max-width: 1000px;
-    width: 100%;
+    justify-content: center;
 }
 
-h1 {
-    font-size: 2.5rem;
+.hidden {
+    display: none !important;
+}
+
+/* Оптимизированные стили главного меню */
+.menu-container {
     text-align: center;
-    margin-bottom: 20px;
-    text-shadow: 0 0 10px #0f0;
+    background: rgba(0, 0, 0, 0.9);
+    padding: 40px;
+    border: 4px solid #0f0;
+    border-radius: 15px;
+    box-shadow: 0 0 40px #0f0;
+    max-width: 600px;
+    width: 90%;
+    backdrop-filter: blur(10px);
+    will-change: transform;
+    transform: translateZ(0); /* Включаем аппаратное ускорение */
+}
+
+.menu-container h1 {
+    font-size: 4rem;
+    margin-bottom: 10px;
+    text-shadow: 0 0 20px #0f0;
     color: #0f0;
+    letter-spacing: 4px;
+    background: linear-gradient(45deg, #0f0, #0a0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.menu-subtitle {
+    font-size: 1.5rem;
+    margin-bottom: 40px;
+    color: #0f0;
+    text-shadow: 0 0 10px #0f0;
+    opacity: 0.8;
+}
+
+.menu-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 40px;
+}
+
+.menu-button {
+    background: linear-gradient(145deg, #0a0, #0f0);
+    color: #000;
+    border: none;
+    padding: 18px 30px;
+    font-size: 1.3rem;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-radius: 10px;
+    font-weight: bold;
+    box-shadow: 0 5px 15px rgba(0, 255, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+    will-change: transform;
+    transform: translateZ(0);
+}
+
+.menu-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.menu-button:hover::before {
+    left: 100%;
+}
+
+.menu-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 255, 0, 0.5);
+    background: linear-gradient(145deg, #0f0, #0a0);
+}
+
+.menu-button:active {
+    transform: translateY(1px);
+    box-shadow: 0 3px 10px rgba(0, 255, 0, 0.3);
+}
+
+.menu-button.secondary {
+    background: linear-gradient(145deg, #333, #555);
+    color: #0f0;
+    box-shadow: 0 5px 15px rgba(0, 255, 0, 0.2);
+}
+
+.menu-button.secondary:hover {
+    background: linear-gradient(145deg, #444, #666);
+    box-shadow: 0 8px 25px rgba(0, 255, 0, 0.3);
+}
+
+.menu-footer {
+    margin-top: 20px;
+}
+
+.version {
+    color: #0f0;
+    font-size: 1rem;
+    opacity: 0.7;
+}
+
+/* Оптимизированные стили экрана выбора сложности */
+.difficulty-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: 30px 0;
+}
+
+.difficulty-button {
+    background: rgba(0, 255, 0, 0.1);
+    border: 2px solid #0f0;
+    padding: 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    will-change: transform;
+    transform: translateZ(0);
+}
+
+.difficulty-button:hover {
+    background: rgba(0, 255, 0, 0.2);
+    transform: translateX(10px);
+    box-shadow: 0 5px 15px rgba(0, 255, 0, 0.3);
+}
+
+.difficulty-button.active {
+    background: linear-gradient(145deg, #0a0, #0f0);
+    border-color: #0f0;
+    box-shadow: 0 5px 20px rgba(0, 255, 0, 0.4);
+}
+
+.difficulty-button.active .difficulty-title {
+    color: #000;
+    font-weight: bold;
+}
+
+.difficulty-button.active .difficulty-description {
+    color: #000;
+    opacity: 0.8;
+}
+
+.difficulty-title {
+    font-size: 1.4rem;
+    color: #0f0;
+    font-weight: bold;
+}
+
+.difficulty-description {
+    font-size: 0.9rem;
+    color: #0f0;
+    opacity: 0.7;
+}
+
+.difficulty-info {
+    margin: 20px 0;
+}
+
+.difficulty-stats {
+    background: rgba(0, 255, 0, 0.05);
+    border: 1px solid #0f0;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.stat {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(0, 255, 0, 0.2);
+}
+
+.stat:last-child {
+    margin-bottom: 0;
+    border-bottom: none;
+}
+
+.stat-label {
+    color: #0f0;
+    opacity: 0.8;
+}
+
+.stat-value {
+    color: #0f0;
+    font-weight: bold;
+}
+
+/* Стили для экрана настроек графики */
+.settings-container {
+    margin: 30px 0;
+    text-align: left;
+}
+
+.setting-group {
+    margin-bottom: 25px;
+    padding: 15px;
+    background: rgba(0, 255, 0, 0.05);
+    border: 1px solid #0f0;
+    border-radius: 10px;
+}
+
+.setting-group h3 {
+    color: #0f0;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+
+.toggle-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.toggle-button {
+    flex: 1;
+    min-width: 100px;
+    background: rgba(0, 255, 0, 0.1);
+    border: 2px solid #0f0;
+    color: #0f0;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Courier New', monospace;
+}
+
+.toggle-button:hover {
+    background: rgba(0, 255, 0, 0.2);
+    transform: translateY(-2px);
+}
+
+.toggle-button.active {
+    background: linear-gradient(145deg, #0a0, #0f0);
+    color: #000;
+    font-weight: bold;
+    box-shadow: 0 0 10px #0f0;
+}
+
+.preset-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.preset-button {
+    flex: 1;
+    padding: 12px 15px;
+    background: rgba(0, 255, 0, 0.1);
+    border: 2px solid #0f0;
+    color: #0f0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+}
+
+.preset-button:hover {
+    background: rgba(0, 255, 0, 0.2);
+    transform: translateY(-2px);
+}
+
+.preset-button.active {
+    background: linear-gradient(145deg, #0a0, #0f0);
+    color: #000;
+    box-shadow: 0 0 15px #0f0;
+}
+
+#presetLow.active {
+    background: linear-gradient(145deg, #ff4444, #ff0000);
+    border-color: #ff0000;
+    box-shadow: 0 0 15px #ff0000;
+}
+
+#presetHigh.active {
+    background: linear-gradient(145deg, #00ff00, #00cc00);
+    border-color: #00ff00;
+    box-shadow: 0 0 15px #00ff00;
+}
+
+.performance-info {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+}
+
+.performance-meter {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.performance-label {
+    color: #0f0;
+    font-weight: bold;
+    min-width: 180px;
+}
+
+.performance-bar {
+    flex: 1;
+    height: 20px;
+    background: rgba(0, 255, 0, 0.1);
+    border: 1px solid #0f0;
+    border-radius: 10px;
+    overflow: hidden;
+    min-width: 200px;
+}
+
+.performance-fill {
+    height: 100%;
+    transition: all 0.5s ease;
+}
+
+.performance-fill.low {
+    background: linear-gradient(90deg, #ff4444, #ff0000);
+    width: 30%;
+}
+
+.performance-fill.medium {
+    background: linear-gradient(90deg, #ffff00, #ffa500);
+    width: 60%;
+}
+
+.performance-fill.high {
+    background: linear-gradient(90deg, #00ff00, #00cc00);
+    width: 90%;
+}
+
+.performance-text {
+    color: #0f0;
+    font-weight: bold;
+    min-width: 120px;
+    text-align: right;
+}
+
+.settings-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Оптимизированные стили экрана управления */
+.controls-list {
+    margin: 30px 0;
+    text-align: left;
+}
+
+.control-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #333;
+}
+
+.control-keys {
+    background: rgba(0, 255, 0, 0.1);
+    padding: 8px 15px;
+    border: 1px solid #0f0;
+    border-radius: 5px;
+    font-weight: bold;
+    min-width: 120px;
+    text-align: center;
+}
+
+.control-description {
+    flex: 1;
+    text-align: right;
+    color: #0f0;
+}
+
+/* Оптимизированные стили экрана об игре */
+.about-content {
+    margin: 30px 0;
+    text-align: left;
+    line-height: 1.6;
+}
+
+.about-content p {
+    margin-bottom: 20px;
+    color: #0f0;
+}
+
+.features-list {
+    margin-top: 30px;
+}
+
+.feature {
+    padding: 10px 0;
+    border-bottom: 1px solid #333;
+    color: #0f0;
+}
+
+/* Оптимизированные стили игрового экрана */
+.game-header {
+    width: 100%;
+    max-width: 800px;
+    margin-bottom: 10px;
 }
 
 .game-container {
     position: relative;
-    width: 100%;
-    max-width: 800px;
+    width: 800px;
     height: 600px;
-    margin: 20px auto;
     border: 4px solid #0f0;
     box-shadow: 0 0 20px #0f0;
     overflow: hidden;
+    background-color: #000;
+    border-radius: 10px;
 }
 
 canvas {
-    background-color: #000;
     display: block;
     width: 100%;
     height: 100%;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: pixelated;
 }
 
 .info-panel {
     display: flex;
     justify-content: space-between;
     width: 100%;
-    max-width: 800px;
-    margin-bottom: 10px;
-    padding: 10px;
-    background-color: #111;
+    padding: 15px;
+    background-color: rgba(0, 0, 0, 0.9);
     border: 2px solid #0f0;
+    border-radius: 10px;
     flex-wrap: wrap;
+    gap: 10px;
 }
 
 .info-item {
     font-size: 1.1rem;
-    margin: 5px;
+    color: #0f0;
+    padding: 5px 10px;
+    background: rgba(0, 255, 0, 0.1);
+    border-radius: 5px;
+    border: 1px solid #0f0;
+}
+
+#difficultyBadge {
+    background: linear-gradient(145deg, #0a0, #0f0);
+    color: #000;
+    font-weight: bold;
+}
+
+.sound-toggle {
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.3s ease;
+}
+
+.sound-toggle:hover {
+    background: rgba(0, 255, 0, 0.2);
+    transform: scale(1.05);
 }
 
 .controls {
     width: 100%;
     max-width: 800px;
     margin-top: 10px;
-    padding: 10px;
-    background-color: #111;
+    padding: 15px;
+    background-color: rgba(0, 0, 0, 0.9);
     border: 2px solid #0f0;
     text-align: center;
+    color: #0f0;
+    border-radius: 10px;
 }
 
-.game-over, .pause-screen {
+/* Оптимизированные стили игровых кнопок */
+.game-button {
+    background: linear-gradient(145deg, #0a0, #0f0);
+    color: #000;
+    border: none;
+    padding: 15px 25px;
+    font-size: 1.2rem;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(0, 255, 0, 0.3);
+    margin: 5px;
+    min-width: 200px;
+    will-change: transform;
+    transform: translateZ(0);
+}
+
+.game-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 255, 0, 0.5);
+    background: linear-gradient(145deg, #0f0, #0a0);
+}
+
+.game-button:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 8px rgba(0, 255, 0, 0.3);
+}
+
+.game-button.secondary {
+    background: linear-gradient(145deg, #333, #555);
+    color: #0f0;
+    box-shadow: 0 4px 12px rgba(0, 255, 0, 0.2);
+}
+
+.game-button.secondary:hover {
+    background: linear-gradient(145deg, #444, #666);
+    box-shadow: 0 6px 20px rgba(0, 255, 0, 0.3);
+}
+
+/* Оптимизированные стили экранов паузы и завершения игры */
+.game-over, .pause-screen, .level-complete {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.95);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     z-index: 10;
+    backdrop-filter: blur(5px);
 }
 
-.game-over h1, .pause-screen h1 {
+.game-over-content, .pause-content, .level-complete-content {
+    background: rgba(0, 0, 0, 0.9);
+    padding: 40px;
+    border: 4px solid #f00;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 0 40px #f00;
+    max-width: 500px;
+    width: 90%;
+}
+
+.pause-content {
+    border-color: #ff0;
+    box-shadow: 0 0 40px #ff0;
+}
+
+.level-complete-content {
+    border-color: #0f0;
+    box-shadow: 0 0 40px #0f0;
+}
+
+.game-over h1, .pause-screen h1, .level-complete h1 {
     font-size: 3rem;
     color: #f00;
     margin-bottom: 20px;
@@ -104,57 +606,64 @@ canvas {
     text-shadow: 0 0 10px #ff0;
 }
 
-.game-over p, .pause-screen p {
+.level-complete h1 {
+    color: #0f0;
+    text-shadow: 0 0 10px #0f0;
+}
+
+.final-score, .level-stats {
     font-size: 1.5rem;
     margin-bottom: 30px;
+    color: #fff;
 }
 
-button {
-    background-color: #000;
+.level-stat {
+    margin: 10px 0;
     color: #0f0;
-    border: 2px solid #0f0;
-    padding: 10px 20px;
-    font-size: 1.2rem;
-    font-family: 'Courier New', monospace;
-    cursor: pointer;
-    transition: all 0.3s;
 }
 
-button:hover {
-    background-color: #0f0;
-    color: #000;
-    box-shadow: 0 0 15px #0f0;
+.game-over-buttons, .pause-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
 }
 
-.hidden {
-    display: none;
+/* Анимации для эффектов */
+@keyframes screenShake {
+    0%, 100% { transform: translateX(0) translateY(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-2px) translateY(-2px); }
+    20%, 40%, 60%, 80% { transform: translateX(2px) translateY(2px); }
 }
 
-.bonus-notification {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 2rem;
-    color: #ff0;
-    text-shadow: 0 0 10px #ff0;
-    z-index: 5;
-    animation: fadeOut 2s forwards;
+.screen-shake {
+    animation: screenShake 0.5s ease-in-out;
 }
 
-@keyframes fadeOut {
-    0% { opacity: 1; }
-    100% { opacity: 0; }
+@keyframes lightFlash {
+    0% { background-color: rgba(255, 255, 200, 0.3); }
+    100% { background-color: transparent; }
+}
+
+.light-flash {
+    animation: lightFlash 0.3s ease-out;
 }
 
 /* Адаптивность для мобильных устройств */
-@media (max-width: 768px) {
-    h1 {
-        font-size: 1.8rem;
+@media (max-width: 850px) {
+    .menu-container {
+        padding: 20px;
+    }
+    
+    .menu-container h1 {
+        font-size: 2.5rem;
     }
     
     .game-container {
-        height: 400px;
+        width: 95vw;
+        height: 70vh;
+        max-width: 600px;
+        max-height: 450px;
     }
     
     .info-panel {
@@ -162,30 +671,57 @@ button:hover {
         align-items: center;
     }
     
-    .info-item {
-        font-size: 1rem;
+    .game-over-buttons, .pause-buttons {
+        flex-direction: column;
     }
     
-    .controls p {
-        font-size: 0.9rem;
+    .control-item {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
     }
     
-    .game-over h1, .pause-screen h1 {
-        font-size: 2rem;
+    .difficulty-button {
+        padding: 15px;
     }
     
-    .game-over p, .pause-screen p {
-        font-size: 1.2rem;
+    .toggle-buttons {
+        flex-direction: column;
+    }
+    
+    .preset-buttons {
+        flex-direction: column;
+    }
+    
+    .performance-meter {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .performance-label {
+        min-width: auto;
+        text-align: center;
+    }
+    
+    .performance-text {
+        text-align: center;
+        min-width: auto;
     }
 }
 
 @media (max-width: 480px) {
-    h1 {
-        font-size: 1.5rem;
+    .menu-container {
+        background: rgba(0, 0, 0, 0.95); /* Упрощаем градиент для мобильных */
     }
     
-    .game-container {
-        height: 300px;
+    .menu-container h1 {
+        font-size: 2rem;
+    }
+    
+    .menu-button, .game-button {
+        padding: 12px 20px;
+        font-size: 1rem;
+        min-width: 150px;
     }
     
     .info-item {
@@ -196,8 +732,39 @@ button:hover {
         font-size: 0.8rem;
     }
     
-    button {
-        font-size: 1rem;
-        padding: 8px 16px;
+    .game-over-content, .pause-content, .level-complete-content {
+        padding: 20px;
+    }
+    
+    .game-over h1, .pause-screen h1, .level-complete h1 {
+        font-size: 2rem;
+    }
+}
+
+/* Оптимизации для устройств с ограниченными ресурсами */
+@media (max-width: 768px) and (orientation: landscape) {
+    .game-container {
+        height: 85vh;
+        max-height: 400px;
+    }
+    
+    .info-panel {
+        padding: 10px;
+    }
+    
+    .info-item {
+        font-size: 0.8rem;
+        padding: 3px 6px;
+    }
+}
+
+/* Отключение анимаций для пользователей, предпочитающих reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .menu-button, .game-button, .difficulty-button, .toggle-button, .preset-button {
+        transition: none;
+    }
+    
+    .menu-button::before {
+        display: none;
     }
 }

@@ -1,70 +1,33 @@
-// Основные переменные игры
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+/**
+ * Танчики - Ретро Аркада
+ * Полная улучшенная версия game.js
+ */
 
-// Элементы интерфейса
-const scoreElement = document.getElementById('score');
-const livesElement = document.getElementById('lives');
-const levelElement = document.getElementById('level');
-const enemiesElement = document.getElementById('enemies');
-const gameOverScreen = document.getElementById('gameOverScreen');
-const finalScoreElement = document.getElementById('finalScore');
-const restartButton = document.getElementById('restartButton');
-const pauseScreen = document.getElementById('pauseScreen');
-const soundToggle = document.getElementById('soundToggle');
-const levelCompleteScreen = document.getElementById('levelCompleteScreen');
-const nextLevelButton = document.getElementById('nextLevelButton');
-const completedLevelElement = document.getElementById('completedLevel');
-const levelScoreElement = document.getElementById('levelScore');
-const difficultyBadge = document.getElementById('difficultyBadge');
-const continueButton = document.getElementById('continueButton');
+// ==================== КОНФИГУРАЦИЯ И КОНСТАНТЫ ====================
 
-// Мобильные элементы управления
-const mobileControls = document.getElementById('mobileControls');
-const mobileShoot = document.getElementById('mobileShoot');
-const mobilePause = document.getElementById('mobilePause');
-const mobileMenu = document.getElementById('mobileMenu');
-const orientationScreen = document.getElementById('orientationScreen');
+const GameConfig = {
+    CANVAS: {
+        WIDTH: 800,
+        HEIGHT: 600,
+        ASPECT_RATIO: 4/3
+    },
+    PERFORMANCE: {
+        UPDATE_INTERVAL: 1000 / 60,
+        MAX_EXPLOSIONS: 20,
+        MAX_PARTICLES: 40,
+        MAX_BONUS_NOTIFICATIONS: 5,
+        MAX_BULLETS: 50
+    },
+    GAME: {
+        TANK_SPEED: 3,
+        BULLET_SPEED: 7,
+        CANNON_RECOIL: 5,
+        CANNON_RECOVERY: 0.5,
+        BONUS_SPAWN_INTERVAL: 10000,
+        PLAYER_INVULNERABILITY_TIME: 120
+    }
+};
 
-// Кнопки движения
-const movementButtons = document.querySelectorAll('.movement-btn');
-
-// Экраны
-const mainMenu = document.getElementById('mainMenu');
-const gameScreen = document.getElementById('gameScreen');
-const controlsScreen = document.getElementById('controlsScreen');
-const aboutScreen = document.getElementById('aboutScreen');
-const difficultyScreen = document.getElementById('difficultyScreen');
-const graphicsScreen = document.getElementById('graphicsScreen');
-
-// Кнопки меню
-const startButton = document.getElementById('startButton');
-const controlsButton = document.getElementById('controlsButton');
-const aboutButton = document.getElementById('aboutButton');
-const difficultyButton = document.getElementById('difficultyButton');
-const graphicsButton = document.getElementById('graphicsButton');
-const backFromControls = document.getElementById('backFromControls');
-const backFromAbout = document.getElementById('backFromAbout');
-const backFromDifficulty = document.getElementById('backFromDifficulty');
-const backFromGraphics = document.getElementById('backFromGraphics');
-const menuButton = document.getElementById('menuButton');
-const menuFromPauseButton = document.getElementById('menuFromPauseButton');
-
-// Кнопки сложности
-const easyButton = document.getElementById('easyButton');
-const normalButton = document.getElementById('normalButton');
-const hardButton = document.getElementById('hardButton');
-const expertButton = document.getElementById('expertButton');
-const enemySpeedStat = document.getElementById('enemySpeedStat');
-const enemyShootStat = document.getElementById('enemyShootStat');
-const enemyCountStat = document.getElementById('enemyCountStat');
-const bonusChanceStat = document.getElementById('bonusChanceStat');
-
-// Кнопки графики
-const applyGraphics = document.getElementById('applyGraphics');
-const resetGraphics = document.getElementById('resetGraphics');
-
-// Конфигурация уровней сложности
 const DIFFICULTY_LEVELS = {
     easy: {
         name: "ЛЁГКАЯ",
@@ -112,69 +75,76 @@ const DIFFICULTY_LEVELS = {
     }
 };
 
-// Настройки графики
-const GRAPHICS_SETTINGS = {
-    explosions: true,
-    particleDensity: 'medium',
-    screenShake: true,
-    renderDistance: 'high',
-    frameRateTarget: 60,
-    lowSpecMode: false
+const COLORS = {
+    BLACK: '#000',
+    WHITE: '#fff',
+    GREEN: '#0f0',
+    RED: '#f00',
+    BLUE: '#00f',
+    GRAY: '#888',
+    BROWN: '#8B4513',
+    DARK_GREEN: '#006400',
+    YELLOW: '#ff0',
+    ORANGE: '#ffa500',
+    PURPLE: '#800080',
+    DARK_RED: '#600',
+    DARK_BROWN: '#643200'
 };
 
-// Константы игры
-const TANK_SPEED = 3;
-const BULLET_SPEED = 7;
-const CANNON_RECOIL = 5;
-const CANNON_RECOVERY = 0.5;
+// ==================== СИСТЕМА УТИЛИТ ====================
 
-// Цвета
-const BLACK = '#000';
-const WHITE = '#fff';
-const GREEN = '#0f0';
-const RED = '#f00';
-const BLUE = '#00f';
-const GRAY = '#888';
-const BROWN = '#8B4513';
-const DARK_GREEN = '#006400';
-const YELLOW = '#ff0';
-const ORANGE = '#ffa500';
-const PURPLE = '#800080';
+class Utils {
+    static isVisible(object) {
+        return object.x < canvas.width && 
+               object.x + object.width > 0 &&
+               object.y < canvas.height &&
+               object.y + object.height > 0;
+    }
+    
+    static createVector(x, y) {
+        return { x, y };
+    }
+    
+    static distance(x1, y1, x2, y2) {
+        return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+    }
+    
+    static clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+    }
+    
+    static random(min, max) {
+        return Math.random() * (max - min) + min;
+    }
+    
+    static randomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+    
+    static throttle(func, limit) {
+        let inThrottle;
+        return function(...args) {
+            if (!inThrottle) {
+                func.apply(this, args);
+                inThrottle = true;
+                setTimeout(() => inThrottle = false, limit);
+            }
+        };
+    }
+    
+    static debounce(func, delay) {
+        let timeoutId;
+        return function(...args) {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => func.apply(this, args), delay);
+        };
+    }
+}
 
-// Игровые объекты
-let player = null;
-let bullets = [];
-let enemies = [];
-let walls = [];
-let explosions = [];
-let bonuses = [];
-let gameOver = false;
-let gamePaused = false;
-let score = 0;
-let playerLives = 3;
-let gameLevel = 1;
-let enemiesToKill = 5;
-let lastBonusTime = 0;
-let bonusNotifications = [];
-let lastMoveSound = 0;
-let currentDifficulty = 'normal';
+// ==================== СИСТЕМА КОЛЛИЗИЙ ====================
 
-// Мобильное управление
-let isMobile = false;
-let activeDirections = new Set();
-let isShooting = false;
-let autoShootInterval = null;
-
-// Оптимизация производительности
-let lastUpdateTime = 0;
-let UPDATE_INTERVAL = 1000 / 60;
-let frameCount = 0;
-let lastFpsUpdate = 0;
-let currentFPS = 0;
-
-// Пространственное разделение для оптимизации коллизий
-class SpatialHash {
-    constructor(cellSize) {
+class CollisionSystem {
+    constructor(cellSize = 100) {
         this.cellSize = cellSize;
         this.grid = new Map();
     }
@@ -191,11 +161,15 @@ class SpatialHash {
         this.grid.get(key).push(object);
     }
     
-    getNearby(x, y) {
+    getNearby(x, y, radius = this.cellSize) {
+        const centerX = Math.floor(x / this.cellSize);
+        const centerY = Math.floor(y / this.cellSize);
         const keys = [];
-        for (let dx = -1; dx <= 1; dx++) {
-            for (let dy = -1; dy <= 1; dy++) {
-                keys.push(this.getCellKey(x + dx * this.cellSize, y + dy * this.cellSize));
+        
+        const range = Math.ceil(radius / this.cellSize);
+        for (let dx = -range; dx <= range; dx++) {
+            for (let dy = -range; dy <= range; dy++) {
+                keys.push(`${centerX + dx},${centerY + dy}`);
             }
         }
         
@@ -213,92 +187,580 @@ class SpatialHash {
     }
 }
 
-const spatialHash = new SpatialHash(100);
+// ==================== СИСТЕМА ГРАФИКИ ====================
 
-// Класс для управления настройками графики
-class GraphicsSettings {
+class GraphicsManager {
     constructor() {
+        this.settings = {
+            explosions: true,
+            particleDensity: 'medium',
+            screenShake: true,
+            frameRateTarget: 60,
+            lowSpecMode: false
+        };
         this.loadSettings();
     }
     
     loadSettings() {
-        const saved = localStorage.getItem('tankGraphicsSettings');
-        if (saved) {
-            try {
-                const parsedSettings = JSON.parse(saved);
-                Object.assign(GRAPHICS_SETTINGS, parsedSettings);
-            } catch (e) {
-                console.warn('Ошибка загрузки настроек графики:', e);
-                this.resetToDefaults();
+        try {
+            const saved = localStorage.getItem('tankGraphicsSettings');
+            if (saved) {
+                Object.assign(this.settings, JSON.parse(saved));
             }
+        } catch (e) {
+            console.warn('Ошибка загрузки настроек графики:', e);
+            this.resetToDefaults();
         }
         this.applySettings();
     }
     
     saveSettings() {
         try {
-            localStorage.setItem('tankGraphicsSettings', JSON.stringify(GRAPHICS_SETTINGS));
+            localStorage.setItem('tankGraphicsSettings', JSON.stringify(this.settings));
         } catch (e) {
             console.warn('Ошибка сохранения настроек графики:', e);
         }
     }
     
-    setSetting(key, value) {
-        GRAPHICS_SETTINGS[key] = value;
-        this.saveSettings();
-        this.applySettings();
-    }
-    
     applySettings() {
-        if (GRAPHICS_SETTINGS.frameRateTarget === 0) {
-            UPDATE_INTERVAL = 1000 / 144;
-        } else {
-            UPDATE_INTERVAL = 1000 / GRAPHICS_SETTINGS.frameRateTarget;
-        }
+        GameState.graphicsSettings = { ...this.settings };
         
-        this.applyGraphicsSettings();
-    }
-    
-    applyGraphicsSettings() {
-        console.log('Настройки графики применены:', GRAPHICS_SETTINGS);
+        const targetFPS = this.settings.frameRateTarget === 0 ? 144 : this.settings.frameRateTarget;
+        GameConfig.PERFORMANCE.UPDATE_INTERVAL = 1000 / targetFPS;
+        
+        if (!this.settings.explosions) {
+            GameState.explosions = [];
+        }
     }
     
     getParticleLimit() {
-        switch(GRAPHICS_SETTINGS.particleDensity) {
-            case 'low': return 8;
-            case 'medium': return 20;
-            case 'high': return 40;
-            default: return 20;
-        }
+        const limits = {
+            'low': 8,
+            'medium': 20,
+            'high': 40
+        };
+        return limits[this.settings.particleDensity] || 20;
     }
     
     getScreenShakeIntensity() {
-        return GRAPHICS_SETTINGS.screenShake ? 1 : 0;
+        return this.settings.screenShake ? 1 : 0;
     }
     
     resetToDefaults() {
-        Object.assign(GRAPHICS_SETTINGS, {
+        this.settings = {
             explosions: true,
             particleDensity: 'medium',
             screenShake: true,
-            renderDistance: 'high',
             frameRateTarget: 60,
             lowSpecMode: false
-        });
+        };
     }
 }
 
-const graphicsSettings = new GraphicsSettings();
+// ==================== БАЗОВЫЕ КЛАССЫ ИГРОВЫХ ОБЪЕКТОВ ====================
 
-// Функция проверки видимости объекта
-function isVisible(object) {
-    return object.x < canvas.width && 
-           object.x + object.width > 0 &&
-           object.y < canvas.height &&
-           object.y + object.height > 0;
+class GameObject {
+    constructor(x, y, width, height) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.active = true;
+    }
+    
+    update() {
+        // Переопределяется в дочерних классах
+    }
+    
+    draw() {
+        // Переопределяется в дочерних классах
+    }
+    
+    collidesWith(other) {
+        return this.x < other.x + other.width &&
+               this.x + this.width > other.x &&
+               this.y < other.y + other.height &&
+               this.y + this.height > other.y;
+    }
+    
+    destroy() {
+        this.active = false;
+    }
 }
 
-// Улучшенный класс взрыва
+class Tank extends GameObject {
+    constructor(x, y, color, isPlayer = false) {
+        super(x, y, 32, 32);
+        this.color = color;
+        this.isPlayer = isPlayer;
+        this.direction = 0;
+        this.aimDirection = 0;
+        this.cooldown = 0;
+        
+        const difficulty = DIFFICULTY_LEVELS[GameState.currentDifficulty];
+        this.speed = isPlayer ? difficulty.playerSpeed : difficulty.enemySpeed;
+        
+        this.moveCooldown = 0;
+        this.lastPlayerPos = Utils.createVector(0, 0);
+        this.cannonOffset = 0;
+        this.health = 1;
+        this.invulnerable = 0;
+        this.lastPosition = Utils.createVector(x, y);
+    }
+    
+    update(walls, playerPos = null) {
+        if (!this.active) return;
+        
+        if (playerPos) {
+            this.lastPlayerPos = playerPos;
+        }
+        
+        if (this.invulnerable > 0) {
+            this.invulnerable--;
+        }
+        
+        this.lastPosition.x = this.x;
+        this.lastPosition.y = this.y;
+        
+        if (this.isPlayer) {
+            this.updatePlayer();
+        } else {
+            this.updateEnemy();
+        }
+        
+        this.handleWallCollisions(walls);
+        
+        if (this.cooldown > 0) this.cooldown--;
+        if (this.cannonOffset > 0) this.cannonOffset -= GameConfig.GAME.CANNON_RECOVERY;
+    }
+    
+    updatePlayer() {
+        if (GameState.isMobile && GameState.activeDirections.size > 0) {
+            this.handleMobileInput();
+        } else {
+            this.handleKeyboardInput();
+        }
+    }
+    
+    handleMobileInput() {
+        GameState.activeDirections.forEach(direction => {
+            switch(direction) {
+                case 'up':
+                    this.y -= this.speed;
+                    this.direction = 0;
+                    break;
+                case 'down':
+                    this.y += this.speed;
+                    this.direction = 2;
+                    break;
+                case 'left':
+                    this.x -= this.speed;
+                    this.direction = 3;
+                    break;
+                case 'right':
+                    this.x += this.speed;
+                    this.direction = 1;
+                    break;
+            }
+        });
+        
+        this.aimDirection = this.direction;
+        this.playMoveSound();
+    }
+    
+    handleKeyboardInput() {
+        const moved = this.processMovement();
+        this.processAiming();
+        if (moved) this.playMoveSound();
+    }
+    
+    processMovement() {
+        let moved = false;
+        
+        if (keys['w']) {
+            this.y -= this.speed;
+            this.direction = 0;
+            moved = true;
+        }
+        if (keys['s']) {
+            this.y += this.speed;
+            this.direction = 2;
+            moved = true;
+        }
+        if (keys['a']) {
+            this.x -= this.speed;
+            this.direction = 3;
+            moved = true;
+        }
+        if (keys['d']) {
+            this.x += this.speed;
+            this.direction = 1;
+            moved = true;
+        }
+        
+        return moved;
+    }
+    
+    processAiming() {
+        if (keys['arrowup']) this.aimDirection = 0;
+        if (keys['arrowright']) this.aimDirection = 1;
+        if (keys['arrowdown']) this.aimDirection = 2;
+        if (keys['arrowleft']) this.aimDirection = 3;
+    }
+    
+    playMoveSound() {
+        const now = Date.now();
+        if ((this.x !== this.lastPosition.x || this.y !== this.lastPosition.y) && 
+            now - GameState.lastMoveSound > 200) {
+            soundSystem.play('move');
+            GameState.lastMoveSound = now;
+        }
+    }
+    
+    updateEnemy() {
+        this.moveCooldown--;
+        
+        if (this.moveCooldown <= 0) {
+            this.updateEnemyDirection();
+            this.moveCooldown = Utils.randomInt(30, 90);
+        }
+        
+        this.moveInCurrentDirection();
+        this.updateEnemyAiming();
+        this.tryShoot();
+    }
+    
+    updateEnemyDirection() {
+        const dx = this.lastPlayerPos.x - this.x;
+        const dy = this.lastPlayerPos.y - this.y;
+        
+        if (Math.random() < 0.8) {
+            if (Math.abs(dx) > Math.abs(dy)) {
+                this.direction = dx > 0 ? 1 : 3;
+            } else {
+                this.direction = dy > 0 ? 2 : 0;
+            }
+        } else {
+            this.direction = Math.floor(Math.random() * 4);
+        }
+    }
+    
+    moveInCurrentDirection() {
+        switch(this.direction) {
+            case 0: this.y -= this.speed; break;
+            case 1: this.x += this.speed; break;
+            case 2: this.y += this.speed; break;
+            case 3: this.x -= this.speed; break;
+        }
+    }
+    
+    updateEnemyAiming() {
+        const dx = this.lastPlayerPos.x - this.x;
+        const dy = this.lastPlayerPos.y - this.y;
+        
+        if (Math.abs(dx) > Math.abs(dy)) {
+            this.aimDirection = dx > 0 ? 1 : 3;
+        } else {
+            this.aimDirection = dy > 0 ? 2 : 0;
+        }
+    }
+    
+    tryShoot() {
+        const difficulty = DIFFICULTY_LEVELS[GameState.currentDifficulty];
+        if (Math.random() < difficulty.enemyShootChance) {
+            const bullet = this.shoot();
+            if (bullet) {
+                GameState.bullets.push(bullet);
+            }
+        }
+    }
+    
+    handleWallCollisions(walls) {
+        const boundaryMargin = 20;
+        const boundaries = [
+            this.x < boundaryMargin,
+            this.x > canvas.width - this.width - boundaryMargin,
+            this.y < boundaryMargin,
+            this.y > canvas.height - this.height - boundaryMargin
+        ];
+        
+        if (boundaries.some(b => b) || walls.some(wall => this.collidesWith(wall))) {
+            this.x = this.lastPosition.x;
+            this.y = this.lastPosition.y;
+            
+            if (!this.isPlayer) {
+                this.direction = Math.floor(Math.random() * 4);
+                this.moveCooldown = 20;
+            }
+        }
+    }
+    
+    draw() {
+        if (!Utils.isVisible(this)) return;
+        
+        ctx.save();
+        ctx.translate(this.x + this.width/2, this.y + this.height/2);
+        
+        if (this.invulnerable > 0 && Math.floor(this.invulnerable / 5) % 2 === 0) {
+            ctx.globalAlpha = 0.5;
+        }
+        
+        this.drawTankBody();
+        this.drawCannon();
+        
+        ctx.restore();
+        ctx.globalAlpha = 1;
+    }
+    
+    drawTankBody() {
+        ctx.rotate(this.direction * Math.PI/2);
+        
+        ctx.fillStyle = this.color;
+        ctx.fillRect(-this.width/2 + 4, -this.height/2 + 4, this.width - 8, this.height - 8);
+        
+        ctx.strokeStyle = COLORS.BLACK;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-this.width/2 + 4, -this.height/2 + 4, this.width - 8, this.height - 8);
+        
+        ctx.fillStyle = this.isPlayer ? COLORS.DARK_GREEN : COLORS.DARK_RED;
+        ctx.fillRect(-this.width/2 + 8, -this.height/2 + 8, this.width - 16, this.height - 16);
+        
+        ctx.rotate(-this.direction * Math.PI/2);
+    }
+    
+    drawCannon() {
+        ctx.rotate(this.aimDirection * Math.PI/2);
+        
+        const cannonLength = 16 - this.cannonOffset;
+        ctx.fillStyle = this.isPlayer ? COLORS.DARK_GREEN : '#900';
+        ctx.fillRect(-2, -this.height/2 - cannonLength + 8, 4, cannonLength);
+        
+        ctx.rotate(-this.aimDirection * Math.PI/2);
+    }
+    
+    shoot() {
+        if (this.cooldown === 0) {
+            this.cooldown = 30;
+            this.cannonOffset = GameConfig.GAME.CANNON_RECOIL;
+            
+            soundSystem.play('shoot');
+            
+            const bullet = this.createBullet();
+            return bullet;
+        }
+        return null;
+    }
+    
+    createBullet() {
+        const shootDir = this.aimDirection;
+        let bulletX, bulletY;
+        
+        switch(shootDir) {
+            case 0:
+                bulletX = this.x + this.width/2;
+                bulletY = this.y;
+                break;
+            case 1:
+                bulletX = this.x + this.width;
+                bulletY = this.y + this.height/2;
+                break;
+            case 2:
+                bulletX = this.x + this.width/2;
+                bulletY = this.y + this.height;
+                break;
+            case 3:
+                bulletX = this.x;
+                bulletY = this.y + this.height/2;
+                break;
+        }
+        
+        return new Bullet(bulletX, bulletY, shootDir, this.isPlayer);
+    }
+    
+    takeDamage() {
+        if (this.invulnerable > 0) return false;
+        
+        this.health--;
+        if (this.health <= 0) {
+            return true;
+        }
+        
+        soundSystem.play('hit');
+        
+        if (this.isPlayer) {
+            this.invulnerable = GameConfig.GAME.PLAYER_INVULNERABILITY_TIME;
+        }
+        return false;
+    }
+}
+
+class Bullet extends GameObject {
+    constructor(x, y, direction, isPlayer) {
+        super(x, y, 6, 6);
+        this.direction = direction;
+        this.isPlayer = isPlayer;
+        this.speed = GameConfig.GAME.BULLET_SPEED;
+        this.power = 1;
+    }
+    
+    update() {
+        switch(this.direction) {
+            case 0: this.y -= this.speed; break;
+            case 1: this.x += this.speed; break;
+            case 2: this.y += this.speed; break;
+            case 3: this.x -= this.speed; break;
+        }
+        
+        if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
+            this.destroy();
+            return false;
+        }
+        
+        return this.active;
+    }
+    
+    draw() {
+        if (!Utils.isVisible(this)) return;
+        
+        ctx.fillStyle = this.isPlayer ? COLORS.WHITE : COLORS.RED;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.width/2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = this.isPlayer ? COLORS.YELLOW : COLORS.ORANGE;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.width/4, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+class Wall extends GameObject {
+    constructor(x, y, width, height, destructible = false) {
+        super(x, y, width, height);
+        this.destructible = destructible;
+        this.health = destructible ? 1 : Infinity;
+    }
+    
+    draw() {
+        if (!Utils.isVisible(this)) return;
+        
+        if (this.destructible) {
+            ctx.fillStyle = COLORS.BROWN;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+            
+            ctx.strokeStyle = COLORS.DARK_BROWN;
+            ctx.lineWidth = 1;
+            for (let i = 0; i < this.width; i += 4) {
+                ctx.beginPath();
+                ctx.moveTo(this.x + i, this.y);
+                ctx.lineTo(this.x + i, this.y + this.height);
+                ctx.stroke();
+            }
+            for (let j = 0; j < this.height; j += 4) {
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y + j);
+                ctx.lineTo(this.x + this.width, this.y + j);
+                ctx.stroke();
+            }
+        } else {
+            ctx.fillStyle = COLORS.GRAY;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+            
+            ctx.strokeStyle = '#666';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < this.width; i += 6) {
+                ctx.beginPath();
+                ctx.moveTo(this.x + i, this.y);
+                ctx.lineTo(this.x + i, this.y + this.height);
+                ctx.stroke();
+            }
+            for (let j = 0; j < this.height; j += 6) {
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y + j);
+                ctx.lineTo(this.x + this.width, this.y + j);
+                ctx.stroke();
+            }
+        }
+    }
+}
+
+class Bonus extends GameObject {
+    constructor(x, y) {
+        super(x, y, 20, 20);
+        this.type = Math.floor(Math.random() * 3);
+        this.life = 300;
+    }
+    
+    update() {
+        this.life--;
+        return this.life > 0;
+    }
+    
+    draw() {
+        if (!Utils.isVisible(this)) return;
+        
+        if (this.life < 60 && Math.floor(this.life / 10) % 2 === 0) {
+            return;
+        }
+        
+        ctx.fillStyle = this.getColor();
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+        
+        ctx.strokeStyle = COLORS.WHITE;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(this.x, this.y, this.width, this.height);
+        
+        ctx.fillStyle = COLORS.WHITE;
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(this.getSymbol(), this.x + this.width/2, this.y + this.height/2);
+    }
+    
+    getColor() {
+        switch(this.type) {
+            case 0: return COLORS.RED;
+            case 1: return COLORS.BLUE;
+            case 2: return COLORS.PURPLE;
+            default: return COLORS.YELLOW;
+        }
+    }
+    
+    getSymbol() {
+        switch(this.type) {
+            case 0: return '♥';
+            case 1: return '⚡';
+            case 2: return '★';
+            default: return '?';
+        }
+    }
+    
+    applyBonus(tank) {
+        soundSystem.play('bonus');
+        
+        switch(this.type) {
+            case 0:
+                if (tank.isPlayer) {
+                    GameState.playerLives++;
+                    showBonusNotification("+1 ЖИЗНЬ");
+                }
+                break;
+            case 1:
+                tank.speed += 1;
+                setTimeout(() => {
+                    if (tank.speed > (tank.isPlayer ? DIFFICULTY_LEVELS[GameState.currentDifficulty].playerSpeed : DIFFICULTY_LEVELS[GameState.currentDifficulty].enemySpeed)) {
+                        tank.speed -= 1;
+                    }
+                }, 10000);
+                showBonusNotification("СКОРОСТЬ ПОВЫШЕНА");
+                break;
+            case 2:
+                showBonusNotification("МОЩНОСТЬ ПОВЫШЕНА");
+                break;
+        }
+    }
+}
+
 class EnhancedExplosion {
     constructor(x, y, size = 1, type = 'normal') {
         this.x = x;
@@ -306,29 +768,27 @@ class EnhancedExplosion {
         this.size = size;
         this.type = type;
         this.life = 1.0;
-        this.stage = 0; // 0: growing, 1: sustain, 2: fading
+        this.stage = 0;
         this.particles = [];
         this.lightFlash = 1.0;
         this.screenShake = 0;
         
         this.initExplosion();
         
-        if (GRAPHICS_SETTINGS.explosions) {
+        if (GameState.graphicsSettings.explosions) {
             soundSystem.play('explosion');
         }
     }
     
     initExplosion() {
-        if (!GRAPHICS_SETTINGS.explosions) return;
+        if (!GameState.graphicsSettings.explosions) return;
         
-        const particleLimit = graphicsSettings.getParticleLimit();
+        const particleLimit = graphicsManager.getParticleLimit();
         
-        // Основной взрыв
         this.radius = 10 * this.size;
         this.maxRadius = 40 * this.size;
         this.growing = true;
         
-        // Создаем частицы в зависимости от настроек
         const baseParticles = Math.min(15 * this.size, particleLimit);
         
         for (let i = 0; i < baseParticles; i++) {
@@ -349,15 +809,10 @@ class EnhancedExplosion {
             });
         }
         
-        // Добавляем дополнительные эффекты для больших взрывов
         if (this.size > 1) {
-            // Вспышка света
             this.lightFlash = 1.0;
+            this.screenShake = 5 * this.size * graphicsManager.getScreenShakeIntensity();
             
-            // Сотрясение экрана
-            this.screenShake = 5 * this.size * graphicsSettings.getScreenShakeIntensity();
-            
-            // Дополнительные частицы для больших взрывов
             const extraParticles = Math.min(10 * this.size, particleLimit / 2);
             for (let i = 0; i < extraParticles; i++) {
                 this.particles.push({
@@ -376,23 +831,18 @@ class EnhancedExplosion {
     }
     
     getParticleColor() {
-        const colors = [
-            '#FFA500', '#FF4500', '#FFFF00', '#FF6347'
-        ];
+        const colors = ['#FFA500', '#FF4500', '#FFFF00', '#FF6347'];
         return colors[Math.floor(Math.random() * colors.length)];
     }
     
     getSecondaryColor() {
-        const colors = [
-            '#FF0000', '#FF8C00', '#DC143C', '#B22222'
-        ];
+        const colors = ['#FF0000', '#FF8C00', '#DC143C', '#B22222'];
         return colors[Math.floor(Math.random() * colors.length)];
     }
     
     update() {
-        if (!GRAPHICS_SETTINGS.explosions) return false;
+        if (!GameState.graphicsSettings.explosions) return false;
         
-        // Обновляем основную фазу взрыва
         if (this.growing) {
             this.radius += 3;
             if (this.radius >= this.maxRadius) {
@@ -400,30 +850,25 @@ class EnhancedExplosion {
                 this.stage = 1;
             }
         } else if (this.stage === 1) {
-            // Фаза поддержания
             this.life -= 0.02;
             if (this.life <= 0.7) {
                 this.stage = 2;
             }
         } else if (this.stage === 2) {
-            // Фаза затухания
             this.life -= 0.03;
         }
         
-        // Обновляем частицы
         for (let i = this.particles.length - 1; i >= 0; i--) {
             const p = this.particles[i];
             
-            // Физика частиц
             p.x += p.vx;
             p.y += p.vy;
-            p.vy += 0.1; // гравитация
+            p.vy += 0.1;
             
             p.life -= 0.02;
             p.vx *= 0.97;
             p.vy *= 0.97;
             
-            // Уменьшаем размер со временем
             p.size *= 0.98;
             
             if (p.life <= 0 || p.size < 0.1) {
@@ -431,21 +876,17 @@ class EnhancedExplosion {
             }
         }
         
-        // Обновляем вспышку света
         this.lightFlash *= 0.9;
-        
-        // Обновляем сотрясение экрана
         this.screenShake *= 0.8;
         
         return this.life > 0 || this.particles.length > 0 || this.screenShake > 0.1;
     }
     
     draw() {
-        if (!GRAPHICS_SETTINGS.explosions) return;
+        if (!GameState.graphicsSettings.explosions) return;
         
         const alpha = this.life;
         
-        // Рисуем основной взрыв
         if (this.growing || this.life > 0) {
             const gradient = ctx.createRadialGradient(
                 this.x, this.y, 0,
@@ -470,7 +911,6 @@ class EnhancedExplosion {
             ctx.fill();
         }
         
-        // Рисуем частицы
         for (const p of this.particles) {
             const particleAlpha = p.life / p.maxLife;
             
@@ -493,7 +933,6 @@ class EnhancedExplosion {
             ctx.fill();
         }
         
-        // Рисуем вспышку света для больших взрывов
         if (this.lightFlash > 0.01 && this.size > 1) {
             ctx.fillStyle = `rgba(255, 255, 200, ${this.lightFlash * 0.3})`;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -501,7 +940,7 @@ class EnhancedExplosion {
     }
     
     getScreenShake() {
-        if (!GRAPHICS_SETTINGS.screenShake) return { x: 0, y: 0 };
+        if (!GameState.graphicsSettings.screenShake) return { x: 0, y: 0 };
         
         return {
             x: (Math.random() - 0.5) * this.screenShake,
@@ -510,594 +949,953 @@ class EnhancedExplosion {
     }
 }
 
-// Определение мобильного устройства
-function detectMobile() {
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
-           window.innerWidth <= 768;
-}
+// ==================== СИСТЕМА УПРАВЛЕНИЯ УРОВНЯМИ ====================
 
-// Проверка ориентации
-function isLandscape() {
-    return window.innerWidth > window.innerHeight;
-}
-
-// Управление экраном ориентации
-function updateOrientationScreen() {
-    if (!isMobile) return;
-    
-    if (isLandscape()) {
-        orientationScreen.classList.add('hidden');
-    } else {
-        if (gameScreen.classList.contains('hidden')) {
-            orientationScreen.classList.add('hidden');
-        } else {
-            orientationScreen.classList.remove('hidden');
-        }
-    }
-}
-
-// Инициализация мобильного управления
-function initMobileControls() {
-    isMobile = detectMobile();
-    
-    if (isMobile) {
-        console.log('Мобильное устройство обнаружено, активируем кнопочное управление');
-        setupButtonControls();
-        mobileControls.classList.remove('hidden');
+class LevelManager {
+    static createLevel() {
+        const walls = [];
         
-        // Настройка ориентации
-        updateOrientationScreen();
-        window.addEventListener('resize', updateOrientationScreen);
-        window.addEventListener('orientationchange', updateOrientationScreen);
-    } else {
-        console.log('Десктопное устройство, используем клавиатурное управление');
-        mobileControls.classList.add('hidden');
-    }
-}
-
-// Настройка кнопочного управления
-function setupButtonControls() {
-    // Обработчики для кнопок движения
-    movementButtons.forEach(button => {
-        button.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            const direction = button.dataset.direction;
-            activeDirections.add(direction);
-        });
+        walls.push(...this.createBoundaries());
+        walls.push(...this.createStaticWalls());
+        walls.push(...this.createDestructibleWalls());
         
-        button.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            const direction = button.dataset.direction;
-            activeDirections.delete(direction);
-        });
-        
-        // Для поддержки мыши на десктопе (для тестирования)
-        button.addEventListener('mousedown', (e) => {
-            e.preventDefault();
-            const direction = button.dataset.direction;
-            activeDirections.add(direction);
-        });
-        
-        button.addEventListener('mouseup', (e) => {
-            e.preventDefault();
-            const direction = button.dataset.direction;
-            activeDirections.delete(direction);
-        });
-        
-        button.addEventListener('mouseleave', (e) => {
-            e.preventDefault();
-            const direction = button.dataset.direction;
-            activeDirections.delete(direction);
-        });
-    });
-    
-    // Обработчики для кнопки стрельбы
-    mobileShoot.addEventListener('touchstart', handleShootStart, { passive: false });
-    mobileShoot.addEventListener('touchend', handleShootEnd, { passive: false });
-    
-    // Кнопки паузы и меню
-    mobilePause.addEventListener('click', togglePause);
-    mobileMenu.addEventListener('click', showMainMenu);
-    
-    // Предотвращение стандартного поведения
-    document.addEventListener('touchmove', function(e) {
-        if (e.target.classList.contains('movement-btn') || e.target === mobileShoot) {
-            e.preventDefault();
-        }
-    }, { passive: false });
-}
-
-function handleShootStart(e) {
-    e.preventDefault();
-    isShooting = true;
-    
-    // Автоматическая стрельба при удержании
-    autoShootInterval = setInterval(() => {
-        if (isShooting && player && !gamePaused && !gameOver) {
-            const bullet = player.shoot();
-            if (bullet) {
-                bullets.push(bullet);
-            }
-        }
-    }, 300);
-}
-
-function handleShootEnd(e) {
-    e.preventDefault();
-    isShooting = false;
-    if (autoShootInterval) {
-        clearInterval(autoShootInterval);
-        autoShootInterval = null;
-    }
-}
-
-function togglePause() {
-    if (gameOver || levelCompleteScreen.classList.contains('hidden')) return;
-    
-    gamePaused = !gamePaused;
-    pauseScreen.classList.toggle('hidden', !gamePaused);
-}
-
-function showMainMenu() {
-    showScreen(mainMenu);
-    gamePaused = false;
-}
-
-// Класс Танк
-class Tank {
-    constructor(x, y, color, isPlayer = false) {
-        this.x = x;
-        this.y = y;
-        this.width = 32;
-        this.height = 32;
-        this.color = color;
-        this.isPlayer = isPlayer;
-        this.direction = 0;
-        this.aimDirection = 0;
-        this.cooldown = 0;
-        
-        const difficulty = DIFFICULTY_LEVELS[currentDifficulty];
-        this.speed = isPlayer ? difficulty.playerSpeed : difficulty.enemySpeed;
-        
-        this.moveCooldown = 0;
-        this.lastPlayerPos = { x: 0, y: 0 };
-        this.cannonOffset = 0;
-        this.health = 1;
-        this.invulnerable = 0;
-        this.lastX = x;
-        this.lastY = y;
+        return walls;
     }
     
-    update(walls, playerPos = null) {
-        if (playerPos) {
-            this.lastPlayerPos = playerPos;
-        }
-        
-        if (this.invulnerable > 0) {
-            this.invulnerable--;
-        }
-        
-        const oldX = this.x;
-        const oldY = this.y;
-        
-        if (this.isPlayer) {
-            // Мобильное управление кнопками
-            if (isMobile && activeDirections.size > 0) {
-                // Обрабатываем все активные направления
-                activeDirections.forEach(direction => {
-                    switch(direction) {
-                        case 'up':
-                            this.y -= this.speed;
-                            this.direction = 0;
-                            break;
-                        case 'down':
-                            this.y += this.speed;
-                            this.direction = 2;
-                            break;
-                        case 'left':
-                            this.x -= this.speed;
-                            this.direction = 3;
-                            break;
-                        case 'right':
-                            this.x += this.speed;
-                            this.direction = 1;
-                            break;
-                    }
-                });
-                
-                // На мобильных устройствах прицеливание совпадает с направлением движения
-                this.aimDirection = this.direction;
-                
-                // Звук движения
-                if ((this.x !== this.lastX || this.y !== this.lastY) && Date.now() - lastMoveSound > 200) {
-                    soundSystem.play('move');
-                    lastMoveSound = Date.now();
-                }
-            } 
-            // Управление с клавиатуры (для десктопа)
-            else if (!isMobile) {
-                if (keys['w']) {
-                    this.y -= this.speed;
-                    this.direction = 0;
-                }
-                if (keys['s']) {
-                    this.y += this.speed;
-                    this.direction = 2;
-                }
-                if (keys['a']) {
-                    this.x -= this.speed;
-                    this.direction = 3;
-                }
-                if (keys['d']) {
-                    this.x += this.speed;
-                    this.direction = 1;
-                }
-                
-                if ((this.x !== this.lastX || this.y !== this.lastY) && Date.now() - lastMoveSound > 200) {
-                    soundSystem.play('move');
-                    lastMoveSound = Date.now();
-                }
-                
-                this.lastX = this.x;
-                this.lastY = this.y;
-                
-                if (keys['arrowup']) this.aimDirection = 0;
-                if (keys['arrowright']) this.aimDirection = 1;
-                if (keys['arrowdown']) this.aimDirection = 2;
-                if (keys['arrowleft']) this.aimDirection = 3;
-            }
-        } else {
-            // Логика вражеского танка
-            this.moveCooldown--;
-            
-            if (this.moveCooldown <= 0) {
-                const dx = this.lastPlayerPos.x - this.x;
-                const dy = this.lastPlayerPos.y - this.y;
-                
-                if (Math.random() < 0.8) {
-                    if (Math.abs(dx) > Math.abs(dy)) {
-                        this.direction = dx > 0 ? 1 : 3;
-                    } else {
-                        this.direction = dy > 0 ? 2 : 0;
-                    }
-                } else {
-                    this.direction = Math.floor(Math.random() * 4);
-                }
-                
-                this.moveCooldown = Math.floor(Math.random() * 60) + 30;
-            }
-            
-            if (this.direction === 0) {
-                this.y -= this.speed;
-            } else if (this.direction === 1) {
-                this.x += this.speed;
-            } else if (this.direction === 2) {
-                this.y += this.speed;
-            } else if (this.direction === 3) {
-                this.x -= this.speed;
-            }
-            
-            const dx = this.lastPlayerPos.x - this.x;
-            const dy = this.lastPlayerPos.y - this.y;
-            if (Math.abs(dx) > Math.abs(dy)) {
-                this.aimDirection = dx > 0 ? 1 : 3;
-            } else {
-                this.aimDirection = dy > 0 ? 2 : 0;
-            }
-            
-            const difficulty = DIFFICULTY_LEVELS[currentDifficulty];
-            if (Math.random() < difficulty.enemyShootChance) {
-                const bullet = this.shoot();
-                if (bullet) {
-                    bullets.push(bullet);
-                }
-            }
-        }
-        
-        let collided = false;
-        for (const wall of walls) {
-            if (this.collidesWith(wall)) {
-                collided = true;
-                break;
-            }
-        }
-        
-        if (collided || this.x < 20 || this.x > canvas.width - this.width - 20 ||
-            this.y < 20 || this.y > canvas.height - this.height - 20) {
-            this.x = oldX;
-            this.y = oldY;
-            if (!this.isPlayer) {
-                this.direction = Math.floor(Math.random() * 4);
-                this.moveCooldown = 20;
-            }
-        }
-        
-        if (this.cooldown > 0) {
-            this.cooldown--;
-        }
-        
-        if (this.cannonOffset > 0) {
-            this.cannonOffset -= CANNON_RECOVERY;
-        }
+    static createBoundaries() {
+        return [
+            new Wall(0, 0, canvas.width, 20, false),
+            new Wall(0, 0, 20, canvas.height, false),
+            new Wall(0, canvas.height - 20, canvas.width, 20, false),
+            new Wall(canvas.width - 20, 0, 20, canvas.height, false)
+        ];
     }
     
-    draw() {
-        if (!isVisible(this)) return;
+    static createStaticWalls() {
+        const positions = [
+            [200, 150], [400, 100], [600, 200],
+            [100, 400], [300, 350], [500, 450],
+            [150, 250], [350, 300], [550, 150]
+        ];
         
-        ctx.save();
-        ctx.translate(this.x + this.width/2, this.y + this.height/2);
-        
-        if (this.invulnerable > 0 && Math.floor(this.invulnerable / 5) % 2 === 0) {
-            ctx.globalAlpha = 0.5;
-        }
-        
-        ctx.rotate(this.direction * Math.PI/2);
-        ctx.fillStyle = this.color;
-        ctx.fillRect(-this.width/2 + 4, -this.height/2 + 4, this.width - 8, this.height - 8);
-        ctx.strokeStyle = BLACK;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(-this.width/2 + 4, -this.height/2 + 4, this.width - 8, this.height - 8);
-        
-        ctx.fillStyle = this.isPlayer ? DARK_GREEN : '#600';
-        ctx.fillRect(-this.width/2 + 8, -this.height/2 + 8, this.width - 16, this.height - 16);
-        
-        ctx.restore();
-        ctx.save();
-        ctx.translate(this.x + this.width/2, this.y + this.height/2);
-        ctx.rotate(this.aimDirection * Math.PI/2);
-        
-        const cannonLength = 16 - this.cannonOffset;
-        ctx.fillStyle = this.isPlayer ? DARK_GREEN : '#900';
-        ctx.fillRect(-2, -this.height/2 - cannonLength + 8, 4, cannonLength);
-        
-        ctx.restore();
-        ctx.globalAlpha = 1;
+        return positions.map(([x, y]) => new Wall(x, y, 40, 40, false));
     }
     
-    collidesWith(obj) {
-        return this.x < obj.x + obj.width &&
-               this.x + this.width > obj.x &&
-               this.y < obj.y + obj.height &&
-               this.y + this.height > obj.y;
-    }
-    
-    shoot() {
-        if (this.cooldown === 0) {
-            this.cooldown = 30;
-            this.cannonOffset = CANNON_RECOIL;
+    static createDestructibleWalls() {
+        const walls = [];
+        const playerSafeZone = 150;
+        
+        for (let i = 0; i < 25; i++) {
+            let validPosition = false;
+            let x, y;
             
-            soundSystem.play('shoot');
-            
-            const shootDir = this.aimDirection;
-            let bulletX, bulletY;
-            
-            if (shootDir === 0) {
-                bulletX = this.x + this.width/2;
-                bulletY = this.y;
-            } else if (shootDir === 1) {
-                bulletX = this.x + this.width;
-                bulletY = this.y + this.height/2;
-            } else if (shootDir === 2) {
-                bulletX = this.x + this.width/2;
-                bulletY = this.y + this.height;
-            } else if (shootDir === 3) {
-                bulletX = this.x;
-                bulletY = this.y + this.height/2;
+            while (!validPosition) {
+                x = Utils.randomInt(50, canvas.width - 80);
+                y = Utils.randomInt(50, canvas.height - 80);
+                
+                if (Math.abs(x - 100) > playerSafeZone || Math.abs(y - canvas.height/2) > playerSafeZone) {
+                    validPosition = true;
+                }
             }
             
-            return new Bullet(bulletX, bulletY, shootDir, this.isPlayer);
+            walls.push(new Wall(x, y, 30, 30, true));
         }
+        
+        return walls;
+    }
+    
+    static spawnEnemies(count) {
+        const enemies = [];
+        
+        for (let i = 0; i < count; i++) {
+            const enemy = this.createEnemyAtValidPosition();
+            if (enemy) enemies.push(enemy);
+        }
+        
+        return enemies;
+    }
+    
+    static createEnemyAtValidPosition() {
+        const maxAttempts = 50;
+        
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            const x = Utils.randomInt(canvas.width / 2 + 50, canvas.width - 70);
+            const y = Utils.randomInt(70, canvas.height - 140);
+            const enemy = new Tank(x, y, COLORS.RED);
+            
+            if (this.isValidEnemyPosition(enemy)) {
+                return enemy;
+            }
+        }
+        
+        console.warn('Не удалось найти валидную позицию для врага');
         return null;
     }
     
-    takeDamage() {
-        if (this.invulnerable > 0) return false;
-        
-        this.health--;
-        if (this.health <= 0) {
-            return true;
-        }
-        
-        soundSystem.play('hit');
-        
-        if (this.isPlayer) {
-            this.invulnerable = 120;
-        }
-        return false;
+    static isValidEnemyPosition(enemy) {
+        return !GameState.walls.some(wall => enemy.collidesWith(wall));
     }
 }
 
-// Класс Пуля
-class Bullet {
-    constructor(x, y, direction, isPlayer) {
-        this.x = x;
-        this.y = y;
-        this.width = 6;
-        this.height = 6;
-        this.direction = direction;
-        this.isPlayer = isPlayer;
-        this.speed = BULLET_SPEED;
-        this.power = 1;
-    }
-    
-    update() {
-        if (this.direction === 0) {
-            this.y -= this.speed;
-        } else if (this.direction === 1) {
-            this.x += this.speed;
-        } else if (this.direction === 2) {
-            this.y += this.speed;
-        } else if (this.direction === 3) {
-            this.x -= this.speed;
-        }
-        
-        return !(this.x < 0 || this.x > canvas.width || 
-                 this.y < 0 || this.y > canvas.height);
-    }
-    
-    draw() {
-        if (!isVisible(this)) return;
-        
-        ctx.fillStyle = this.isPlayer ? WHITE : RED;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.width/2, 0, Math.PI * 2);
-        ctx.fill();
-        
-        ctx.fillStyle = this.isPlayer ? YELLOW : ORANGE;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.width/4, 0, Math.PI * 2);
-        ctx.fill();
-    }
-    
-    collidesWith(obj) {
-        return this.x < obj.x + obj.width &&
-               this.x + this.width > obj.x &&
-               this.y < obj.y + obj.height &&
-               this.y + this.height > obj.y;
-    }
-}
+// ==================== ОСНОВНОЙ КЛАСС ИГРЫ ====================
 
-// Класс Стена
-class Wall {
-    constructor(x, y, width, height, destructible = false) {
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
-        this.destructible = destructible;
-        this.health = destructible ? 1 : Infinity;
+class GameManager {
+    static init() {
+        this.setupDOMReferences();
+        this.setupEventListeners();
+        this.setupMobileControls();
+        this.setDifficulty('normal');
+        
+        window.addEventListener('resize', Utils.throttle(this.handleResize.bind(this), 250));
+        window.addEventListener('orientationchange', this.handleResize.bind(this));
+        
+        this.initGraphicsScreen();
+        this.gameLoop();
     }
     
-    draw() {
-        if (!isVisible(this)) return;
+    static setupDOMReferences() {
+        this.dom = {
+            score: document.getElementById('score'),
+            lives: document.getElementById('lives'),
+            level: document.getElementById('level'),
+            enemies: document.getElementById('enemies'),
+            gameOverScreen: document.getElementById('gameOverScreen'),
+            finalScore: document.getElementById('finalScore'),
+            pauseScreen: document.getElementById('pauseScreen'),
+            soundToggle: document.getElementById('soundToggle'),
+            levelCompleteScreen: document.getElementById('levelCompleteScreen'),
+            completedLevel: document.getElementById('completedLevel'),
+            levelScore: document.getElementById('levelScore'),
+            difficultyBadge: document.getElementById('difficultyBadge'),
+            mobileControls: document.getElementById('mobileControls'),
+            mobileShoot: document.getElementById('mobileShoot'),
+            mobilePause: document.getElementById('mobilePause'),
+            mobileMenu: document.getElementById('mobileMenu'),
+            orientationScreen: document.getElementById('orientationScreen'),
+            screens: {
+                main: document.getElementById('mainMenu'),
+                game: document.getElementById('gameScreen'),
+                controls: document.getElementById('controlsScreen'),
+                about: document.getElementById('aboutScreen'),
+                difficulty: document.getElementById('difficultyScreen'),
+                graphics: document.getElementById('graphicsScreen')
+            }
+        };
+    }
+    
+    static setupEventListeners() {
+        // Навигация по меню
+        document.getElementById('startButton').addEventListener('click', () => {
+            this.showScreen('game');
+            this.startGame();
+        });
+        document.getElementById('controlsButton').addEventListener('click', () => this.showScreen('controls'));
+        document.getElementById('aboutButton').addEventListener('click', () => this.showScreen('about'));
+        document.getElementById('difficultyButton').addEventListener('click', () => {
+            this.showScreen('difficulty');
+            this.updateDifficultyStats();
+        });
+        document.getElementById('graphicsButton').addEventListener('click', () => {
+            this.showScreen('graphics');
+            this.updateGraphicsUI();
+        });
         
-        if (this.destructible) {
-            ctx.fillStyle = BROWN;
-            ctx.fillRect(this.x, this.y, this.width, this.height);
-            
-            ctx.strokeStyle = '#643200';
-            ctx.lineWidth = 1;
-            for (let i = 0; i < this.width; i += 4) {
-                ctx.beginPath();
-                ctx.moveTo(this.x + i, this.y);
-                ctx.lineTo(this.x + i, this.y + this.height);
-                ctx.stroke();
-            }
-            for (let j = 0; j < this.height; j += 4) {
-                ctx.beginPath();
-                ctx.moveTo(this.x, this.y + j);
-                ctx.lineTo(this.x + this.width, this.y + j);
-                ctx.stroke();
-            }
+        // Кнопки назад
+        document.getElementById('backFromControls').addEventListener('click', () => this.showScreen('main'));
+        document.getElementById('backFromAbout').addEventListener('click', () => this.showScreen('main'));
+        document.getElementById('backFromDifficulty').addEventListener('click', () => this.showScreen('main'));
+        document.getElementById('backFromGraphics').addEventListener('click', () => this.showScreen('main'));
+        
+        // Игровые кнопки
+        document.getElementById('menuButton').addEventListener('click', () => this.showScreen('main'));
+        document.getElementById('menuFromPauseButton').addEventListener('click', () => {
+            this.showScreen('main');
+            GameState.gamePaused = false;
+        });
+        document.getElementById('continueButton').addEventListener('click', () => {
+            GameState.gamePaused = false;
+            this.dom.pauseScreen.classList.add('hidden');
+        });
+        document.getElementById('restartButton').addEventListener('click', () => this.startGame());
+        document.getElementById('nextLevelButton').addEventListener('click', () => this.nextLevel());
+        
+        // Звук
+        this.dom.soundToggle.addEventListener('click', () => this.toggleSound());
+        
+        // Сложность
+        document.querySelectorAll('.difficulty-button').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const difficulty = e.currentTarget.dataset.difficulty;
+                this.setDifficulty(difficulty);
+            });
+        });
+
+        // Графика
+        document.querySelectorAll('.toggle-button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const setting = this.dataset.setting;
+                const value = this.dataset.value;
+                
+                let processedValue = value;
+                if (value === 'true') processedValue = true;
+                if (value === 'false') processedValue = false;
+                if (!isNaN(value) && value !== '') processedValue = Number(value);
+                
+                graphicsManager.settings[setting] = processedValue;
+                GameManager.updateGraphicsUI();
+            });
+        });
+
+        document.querySelectorAll('.preset-button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const preset = this.dataset.preset;
+                
+                document.querySelectorAll('.preset-button').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                GameManager.applyGraphicsPreset(preset);
+                GameManager.updateGraphicsUI();
+            });
+        });
+
+        document.getElementById('applyGraphics').addEventListener('click', () => {
+            graphicsManager.saveSettings();
+            graphicsManager.applySettings();
+            this.showScreen('main');
+        });
+
+        document.getElementById('resetGraphics').addEventListener('click', () => {
+            graphicsManager.resetToDefaults();
+            this.updateGraphicsUI();
+        });
+    }
+    
+    static setupMobileControls() {
+        GameState.isMobile = this.detectMobile();
+        
+        if (GameState.isMobile) {
+            this.setupTouchControls();
+            this.dom.mobileControls.classList.remove('hidden');
+            this.setupOrientationHandler();
         } else {
-            ctx.fillStyle = GRAY;
-            ctx.fillRect(this.x, this.y, this.width, this.height);
-            
-            ctx.strokeStyle = '#666';
-            ctx.lineWidth = 1;
-            for (let i = 0; i < this.width; i += 6) {
-                ctx.beginPath();
-                ctx.moveTo(this.x + i, this.y);
-                ctx.lineTo(this.x + i, this.y + this.height);
-                ctx.stroke();
-            }
-            for (let j = 0; j < this.height; j += 6) {
-                ctx.beginPath();
-                ctx.moveTo(this.x, this.y + j);
-                ctx.lineTo(this.x + this.width, this.y + j);
-                ctx.stroke();
-            }
+            this.dom.mobileControls.classList.add('hidden');
         }
     }
-}
-
-// Класс Бонус
-class Bonus {
-    constructor(x, y) {
-        this.x = x;
-        this.y = y;
-        this.width = 20;
-        this.height = 20;
-        this.type = Math.floor(Math.random() * 3);
-        this.life = 300;
+    
+    static detectMobile() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+               window.innerWidth <= 768;
     }
     
-    update() {
-        this.life--;
-        return this.life > 0;
-    }
-    
-    draw() {
-        if (!isVisible(this)) return;
+    static setupTouchControls() {
+        // Кнопки движения
+        document.querySelectorAll('.movement-btn').forEach(button => {
+            const direction = button.dataset.direction;
+            
+            const startHandler = (e) => {
+                e.preventDefault();
+                GameState.activeDirections.add(direction);
+            };
+            
+            const endHandler = (e) => {
+                e.preventDefault();
+                GameState.activeDirections.delete(direction);
+            };
+            
+            button.addEventListener('touchstart', startHandler, { passive: false });
+            button.addEventListener('touchend', endHandler, { passive: false });
+            button.addEventListener('touchcancel', endHandler, { passive: false });
+            
+            button.addEventListener('mousedown', startHandler);
+            button.addEventListener('mouseup', endHandler);
+            button.addEventListener('mouseleave', endHandler);
+        });
         
-        if (this.life < 60 && Math.floor(this.life / 10) % 2 === 0) {
+        // Кнопка стрельбы
+        const shootStart = (e) => {
+            e.preventDefault();
+            GameState.isShooting = true;
+            
+            GameState.autoShootInterval = setInterval(() => {
+                if (GameState.isShooting && GameState.player && !GameState.gamePaused && !GameState.gameOver) {
+                    const bullet = GameState.player.shoot();
+                    if (bullet) GameState.bullets.push(bullet);
+                }
+            }, 300);
+        };
+        
+        const shootEnd = (e) => {
+            e.preventDefault();
+            GameState.isShooting = false;
+            if (GameState.autoShootInterval) {
+                clearInterval(GameState.autoShootInterval);
+                GameState.autoShootInterval = null;
+            }
+        };
+        
+        this.dom.mobileShoot.addEventListener('touchstart', shootStart, { passive: false });
+        this.dom.mobileShoot.addEventListener('touchend', shootEnd, { passive: false });
+        this.dom.mobileShoot.addEventListener('touchcancel', shootEnd, { passive: false });
+        
+        // Кнопки паузы и меню
+        this.dom.mobilePause.addEventListener('click', () => this.togglePause());
+        this.dom.mobileMenu.addEventListener('click', () => this.showScreen('main'));
+        
+        document.addEventListener('touchmove', (e) => {
+            if (e.target.classList.contains('movement-btn') || e.target === this.dom.mobileShoot) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+    }
+    
+    static setupOrientationHandler() {
+        const updateOrientation = () => {
+            const isLandscape = window.innerWidth > window.innerHeight;
+            if (isLandscape) {
+                this.dom.orientationScreen.classList.add('hidden');
+            } else if (this.dom.screens.game.classList.contains('hidden')) {
+                this.dom.orientationScreen.classList.add('hidden');
+            } else {
+                this.dom.orientationScreen.classList.remove('hidden');
+            }
+        };
+        
+        updateOrientation();
+        window.addEventListener('resize', updateOrientation);
+        window.addEventListener('orientationchange', updateOrientation);
+    }
+    
+    static showScreen(screenName) {
+        Object.values(this.dom.screens).forEach(screen => screen.classList.add('hidden'));
+        this.dom.screens[screenName].classList.remove('hidden');
+        
+        if (screenName === 'game' && GameState.isMobile) {
+            this.resizeCanvasForMobile();
+        }
+        
+        this.updateOrientationScreen();
+        return true;
+    }
+    
+    static updateOrientationScreen() {
+        if (!GameState.isMobile) return;
+        
+        const isLandscape = window.innerWidth > window.innerHeight;
+        if (isLandscape) {
+            this.dom.orientationScreen.classList.add('hidden');
+        } else if (this.dom.screens.game.classList.contains('hidden')) {
+            this.dom.orientationScreen.classList.add('hidden');
+        } else {
+            this.dom.orientationScreen.classList.remove('hidden');
+        }
+    }
+    
+    static resizeCanvasForMobile() {
+        const gameContainer = document.querySelector('.game-container');
+        const containerRect = gameContainer.getBoundingClientRect();
+        
+        const maxWidth = containerRect.width;
+        const maxHeight = containerRect.height;
+        
+        let newWidth = maxWidth;
+        let newHeight = maxWidth * GameConfig.CANVAS.ASPECT_RATIO;
+        
+        if (newHeight > maxHeight) {
+            newHeight = maxHeight;
+            newWidth = maxHeight / GameConfig.CANVAS.ASPECT_RATIO;
+        }
+        
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+        
+        if (GameState.player) {
+            GameState.walls = LevelManager.createLevel();
+        }
+    }
+    
+    static handleResize() {
+        if (this.dom.screens.game.classList.contains('hidden')) return;
+        
+        setTimeout(() => {
+            if (GameState.isMobile) {
+                this.resizeCanvasForMobile();
+                this.updateOrientationScreen();
+            }
+        }, 100);
+    }
+    
+    static startGame() {
+        const difficulty = DIFFICULTY_LEVELS[GameState.currentDifficulty];
+        
+        Object.assign(GameState, {
+            player: new Tank(100, canvas.height / 2, COLORS.GREEN, true),
+            bullets: [],
+            explosions: [],
+            bonuses: [],
+            bonusNotifications: [],
+            gameOver: false,
+            gamePaused: false,
+            score: 0,
+            playerLives: difficulty.playerLives,
+            gameLevel: 1,
+            enemiesToKill: difficulty.initialEnemies,
+            lastBonusTime: 0,
+            lastMoveSound: 0
+        });
+        
+        GameState.player.speed = difficulty.playerSpeed;
+        GameState.walls = LevelManager.createLevel();
+        GameState.enemies = LevelManager.spawnEnemies(GameState.enemiesToKill);
+        
+        GameState.activeDirections.clear();
+        GameState.isShooting = false;
+        
+        this.dom.gameOverScreen.classList.add('hidden');
+        this.dom.pauseScreen.classList.add('hidden');
+        this.dom.levelCompleteScreen.classList.add('hidden');
+        
+        this.updateUI();
+        this.updateDifficultyBadge();
+    }
+    
+    static nextLevel() {
+        const difficulty = DIFFICULTY_LEVELS[GameState.currentDifficulty];
+        
+        GameState.gameLevel++;
+        GameState.enemiesToKill = difficulty.initialEnemies + (GameState.gameLevel - 1) * difficulty.enemyIncrement;
+        GameState.playerLives++;
+        
+        GameState.walls = LevelManager.createLevel();
+        GameState.enemies = LevelManager.spawnEnemies(GameState.enemiesToKill);
+        
+        GameState.player.x = 100;
+        GameState.player.y = canvas.height / 2;
+        GameState.player.invulnerable = 120;
+        
+        this.dom.levelCompleteScreen.classList.add('hidden');
+        this.updateUI();
+    }
+    
+    static togglePause() {
+        if (GameState.gameOver || !this.dom.levelCompleteScreen.classList.contains('hidden')) return;
+        
+        GameState.gamePaused = !GameState.gamePaused;
+        this.dom.pauseScreen.classList.toggle('hidden', !GameState.gamePaused);
+    }
+    
+    static toggleSound() {
+        const soundEnabled = soundSystem.toggleMute();
+        this.dom.soundToggle.textContent = `🔊 ЗВУК: ${soundEnabled ? 'ВКЛ' : 'ВЫКЛ'}`;
+    }
+    
+    static setDifficulty(difficulty) {
+        GameState.currentDifficulty = difficulty;
+        
+        document.querySelectorAll('.difficulty-button').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-difficulty="${difficulty}"]`).classList.add('active');
+        
+        this.updateDifficultyStats();
+        this.updateDifficultyBadge();
+    }
+    
+    static updateDifficultyStats() {
+        const difficulty = DIFFICULTY_LEVELS[GameState.currentDifficulty];
+        document.getElementById('enemySpeedStat').textContent = `${difficulty.enemySpeed}x`;
+        document.getElementById('enemyShootStat').textContent = `${Math.round(difficulty.enemyShootChance * 100)}%`;
+        document.getElementById('enemyCountStat').textContent = difficulty.initialEnemies;
+        document.getElementById('bonusChanceStat').textContent = `${Math.round(difficulty.bonusChance * 100)}%`;
+    }
+    
+    static updateDifficultyBadge() {
+        const difficulty = DIFFICULTY_LEVELS[GameState.currentDifficulty];
+        this.dom.difficultyBadge.textContent = difficulty.name;
+        this.dom.difficultyBadge.style.background = 
+            `linear-gradient(145deg, ${difficulty.color}33, ${difficulty.color}66)`;
+    }
+    
+    static updateUI() {
+        this.dom.score.textContent = GameState.score;
+        this.dom.lives.textContent = GameState.playerLives;
+        this.dom.level.textContent = GameState.gameLevel;
+        this.dom.enemies.textContent = GameState.enemies.length;
+    }
+    
+    static gameLoop(timestamp = 0) {
+        if (this.dom.screens.game.classList.contains('hidden')) {
+            requestAnimationFrame(this.gameLoop.bind(this));
             return;
         }
         
-        ctx.fillStyle = this.getColor();
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        const deltaTime = timestamp - GameState.lastUpdateTime;
+        if (deltaTime < GameConfig.PERFORMANCE.UPDATE_INTERVAL) {
+            requestAnimationFrame(this.gameLoop.bind(this));
+            return;
+        }
         
-        ctx.strokeStyle = WHITE;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(this.x, this.y, this.width, this.height);
+        GameState.lastUpdateTime = timestamp;
+        this.updateFPS(timestamp);
         
-        ctx.fillStyle = WHITE;
-        ctx.font = '16px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(this.getSymbol(), this.x + this.width/2, this.y + this.height/2);
+        if (!GameState.gameOver && !GameState.gamePaused) {
+            this.updateGame();
+            this.renderGame();
+        }
+        
+        requestAnimationFrame(this.gameLoop.bind(this));
     }
     
-    getColor() {
-        switch(this.type) {
-            case 0: return RED;
-            case 1: return BLUE;
-            case 2: return PURPLE;
-            default: return YELLOW;
+    static updateFPS(timestamp) {
+        GameState.frameCount++;
+        if (timestamp - GameState.lastFpsUpdate >= 1000) {
+            GameState.currentFPS = GameState.frameCount;
+            GameState.frameCount = 0;
+            GameState.lastFpsUpdate = timestamp;
         }
     }
     
-    getSymbol() {
-        switch(this.type) {
-            case 0: return '♥';
-            case 1: return '⚡';
-            case 2: return '★';
-            default: return '?';
+    static updateGame() {
+        const shake = this.applyScreenShake();
+        ctx.save();
+        ctx.translate(shake.x, shake.y);
+        
+        collisionSystem.clear();
+        [
+            GameState.player,
+            ...GameState.enemies,
+            ...GameState.walls,
+            ...GameState.bonuses
+        ].forEach(obj => collisionSystem.insert(obj));
+        
+        GameState.player.update(GameState.walls);
+        GameState.enemies.forEach(enemy => enemy.update(GameState.walls, {
+            x: GameState.player.x,
+            y: GameState.player.y
+        }));
+        
+        this.updateBullets();
+        this.updateExplosions();
+        this.updateBonuses();
+        this.updateBonusNotifications();
+        
+        this.cleanupArrays();
+        this.checkLevelCompletion();
+        this.trySpawnBonus();
+        
+        ctx.restore();
+    }
+    
+    static updateBullets() {
+        for (let i = GameState.bullets.length - 1; i >= 0; i--) {
+            const bullet = GameState.bullets[i];
+            
+            if (!bullet.update()) {
+                GameState.bullets.splice(i, 1);
+                continue;
+            }
+            
+            this.handleBulletCollisions(bullet, i);
         }
     }
     
-    applyBonus(tank) {
-        soundSystem.play('bonus');
+    static handleBulletCollisions(bullet, index) {
+        const nearbyObjects = collisionSystem.getNearby(bullet.x, bullet.y);
+        let collisionHandled = false;
         
-        switch(this.type) {
-            case 0:
-                if (tank.isPlayer) {
-                    playerLives++;
-                    showBonusNotification("+1 ЖИЗНЬ");
+        for (const obj of nearbyObjects) {
+            if (bullet.collidesWith(obj)) {
+                if (this.handleWallCollision(bullet, obj)) {
+                    collisionHandled = true;
+                    break;
                 }
-                break;
-            case 1:
-                tank.speed += 1;
-                setTimeout(() => {
-                    if (tank.speed > (tank.isPlayer ? DIFFICULTY_LEVELS[currentDifficulty].playerSpeed : DIFFICULTY_LEVELS[currentDifficulty].enemySpeed)) {
-                        tank.speed -= 1;
-                    }
-                }, 10000);
-                showBonusNotification("СКОРОСТЬ ПОВЫШЕНА");
-                break;
-            case 2:
-                showBonusNotification("МОЩНОСТЬ ПОВЫШЕНА");
-                break;
+                
+                if (this.handleTankCollision(bullet, obj)) {
+                    collisionHandled = true;
+                    break;
+                }
+            }
+        }
+        
+        if (!collisionHandled && bullet.active) {
+            this.checkBulletBoundaries(bullet, index);
         }
     }
     
-    collidesWith(obj) {
-        return this.x < obj.x + obj.width &&
-               this.x + this.width > obj.x &&
-               this.y < obj.y + obj.height &&
-               this.y + this.height > obj.y;
+    static handleWallCollision(bullet, obj) {
+        if (obj instanceof Wall) {
+            if (obj.destructible) {
+                const wallIndex = GameState.walls.indexOf(obj);
+                if (wallIndex > -1) {
+                    GameState.walls.splice(wallIndex, 1);
+                    GameState.explosions.push(new EnhancedExplosion(bullet.x, bullet.y, 0.7));
+                }
+            }
+            GameState.bullets.splice(GameState.bullets.indexOf(bullet), 1);
+            return true;
+        }
+        return false;
+    }
+    
+    static handleTankCollision(bullet, obj) {
+        if (obj instanceof Tank) {
+            if (bullet.isPlayer && !obj.isPlayer) {
+                return this.handleEnemyHit(bullet, obj);
+            } else if (!bullet.isPlayer && obj === GameState.player) {
+                return this.handlePlayerHit(bullet, obj);
+            }
+        }
+        return false;
+    }
+    
+    static handleEnemyHit(bullet, enemy) {
+        if (enemy.takeDamage()) {
+            const enemyIndex = GameState.enemies.indexOf(enemy);
+            if (enemyIndex > -1) {
+                GameState.enemies.splice(enemyIndex, 1);
+                GameState.explosions.push(new EnhancedExplosion(bullet.x, bullet.y, 1.2));
+                GameState.score += 100;
+                this.trySpawnBonus();
+            }
+        }
+        GameState.bullets.splice(GameState.bullets.indexOf(bullet), 1);
+        return true;
+    }
+    
+    static handlePlayerHit(bullet, player) {
+        if (player.takeDamage()) {
+            GameState.playerLives--;
+            GameState.explosions.push(new EnhancedExplosion(
+                player.x + player.width/2,
+                player.y + player.height/2,
+                1.5
+            ));
+            
+            if (GameState.playerLives <= 0) {
+                GameState.gameOver = true;
+                this.dom.finalScore.textContent = GameState.score;
+                this.dom.gameOverScreen.classList.remove('hidden');
+            } else {
+                player.x = 100;
+                player.y = canvas.height / 2;
+                player.invulnerable = 120;
+            }
+        }
+        GameState.bullets.splice(GameState.bullets.indexOf(bullet), 1);
+        return true;
+    }
+    
+    static checkBulletBoundaries(bullet, index) {
+        if (bullet.x < 0 || bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
+            GameState.bullets.splice(index, 1);
+        }
+    }
+    
+    static updateExplosions() {
+        for (let i = GameState.explosions.length - 1; i >= 0; i--) {
+            if (!GameState.explosions[i].update()) {
+                GameState.explosions.splice(i, 1);
+            }
+        }
+    }
+    
+    static updateBonuses() {
+        for (let i = GameState.bonuses.length - 1; i >= 0; i--) {
+            if (!GameState.bonuses[i].update()) {
+                GameState.bonuses.splice(i, 1);
+                continue;
+            }
+            
+            if (GameState.bonuses[i].collidesWith(GameState.player)) {
+                GameState.bonuses[i].applyBonus(GameState.player);
+                GameState.bonuses.splice(i, 1);
+            }
+        }
+    }
+    
+    static updateBonusNotifications() {
+        for (let i = GameState.bonusNotifications.length - 1; i >= 0; i--) {
+            GameState.bonusNotifications[i].life--;
+            if (GameState.bonusNotifications[i].life <= 0) {
+                GameState.bonusNotifications.splice(i, 1);
+            }
+        }
+    }
+    
+    static cleanupArrays() {
+        if (GameState.explosions.length > GameConfig.PERFORMANCE.MAX_EXPLOSIONS) {
+            GameState.explosions = GameState.explosions.slice(-GameConfig.PERFORMANCE.MAX_EXPLOSIONS);
+        }
+        
+        if (GameState.bonusNotifications.length > GameConfig.PERFORMANCE.MAX_BONUS_NOTIFICATIONS) {
+            GameState.bonusNotifications = GameState.bonusNotifications.slice(-GameConfig.PERFORMANCE.MAX_BONUS_NOTIFICATIONS);
+        }
+        
+        if (GameState.bullets.length > GameConfig.PERFORMANCE.MAX_BULLETS) {
+            GameState.bullets = GameState.bullets.slice(-GameConfig.PERFORMANCE.MAX_BULLETS);
+        }
+    }
+    
+    static applyScreenShake() {
+        if (!GameState.graphicsSettings.screenShake) return { x: 0, y: 0 };
+        
+        let totalShakeX = 0;
+        let totalShakeY = 0;
+        
+        for (const explosion of GameState.explosions) {
+            const shake = explosion.getScreenShake();
+            totalShakeX += shake.x;
+            totalShakeY += shake.y;
+        }
+        
+        return {
+            x: Utils.clamp(totalShakeX, -10, 10),
+            y: Utils.clamp(totalShakeY, -10, 10)
+        };
+    }
+    
+    static trySpawnBonus() {
+        const now = Date.now();
+        if (now - GameState.lastBonusTime > GameConfig.GAME.BONUS_SPAWN_INTERVAL) {
+            const difficulty = DIFFICULTY_LEVELS[GameState.currentDifficulty];
+            
+            if (Math.random() < difficulty.bonusChance) {
+                const bonus = this.createBonusAtValidPosition();
+                if (bonus) {
+                    GameState.bonuses.push(bonus);
+                    GameState.lastBonusTime = now;
+                }
+            }
+        }
+    }
+    
+    static createBonusAtValidPosition() {
+        const maxAttempts = 30;
+        
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            const x = Utils.randomInt(20, canvas.width - 40);
+            const y = Utils.randomInt(20, canvas.height - 40);
+            const bonus = new Bonus(x, y);
+            
+            if (!GameState.walls.some(wall => bonus.collidesWith(wall))) {
+                return bonus;
+            }
+        }
+        
+        return null;
+    }
+    
+    static checkLevelCompletion() {
+        if (GameState.enemies.length === 0 && 
+            !GameState.gameOver && 
+            !GameState.gamePaused && 
+            this.dom.levelCompleteScreen.classList.contains('hidden')) {
+            this.completeLevel();
+        }
+    }
+    
+    static completeLevel() {
+        const difficulty = DIFFICULTY_LEVELS[GameState.currentDifficulty];
+        
+        this.dom.levelCompleteScreen.classList.remove('hidden');
+        this.dom.completedLevel.textContent = GameState.gameLevel;
+        this.dom.levelScore.textContent = 500;
+        
+        GameState.score += 500;
+        this.updateUI();
+    }
+    
+    static renderGame() {
+        ctx.fillStyle = COLORS.BLACK;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        this.drawGrid();
+        this.renderVisibleObjects();
+        this.renderUI();
+    }
+    
+    static drawGrid() {
+        ctx.strokeStyle = '#111';
+        ctx.lineWidth = 1;
+        
+        for (let x = 0; x < canvas.width; x += 40) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, canvas.height);
+            ctx.stroke();
+        }
+        
+        for (let y = 0; y < canvas.height; y += 40) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(canvas.width, y);
+            ctx.stroke();
+        }
+    }
+    
+    static renderVisibleObjects() {
+        const visibleObjects = {
+            walls: GameState.walls.filter(wall => Utils.isVisible(wall)),
+            bullets: GameState.bullets.filter(bullet => Utils.isVisible(bullet)),
+            enemies: GameState.enemies.filter(enemy => Utils.isVisible(enemy)),
+            explosions: GameState.explosions.filter(explosion => Utils.isVisible(explosion)),
+            bonuses: GameState.bonuses.filter(bonus => Utils.isVisible(bonus))
+        };
+        
+        visibleObjects.walls.forEach(wall => wall.draw());
+        visibleObjects.bullets.forEach(bullet => bullet.draw());
+        visibleObjects.enemies.forEach(enemy => enemy.draw());
+        visibleObjects.explosions.forEach(explosion => explosion.draw());
+        visibleObjects.bonuses.forEach(bonus => bonus.draw());
+        
+        if (Utils.isVisible(GameState.player)) {
+            GameState.player.draw();
+        }
+    }
+    
+    static renderUI() {
+        GameState.bonusNotifications.forEach(notification => {
+            const alpha = notification.life / 120;
+            ctx.fillStyle = `rgba(255, 255, 0, ${alpha})`;
+            ctx.font = '20px Courier New';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(notification.text, notification.x, notification.y);
+        });
+        
+        this.updateUI();
+    }
+    
+    static initGraphicsScreen() {
+        const scrollContainer = document.querySelector('.settings-scroll-container');
+        const scrollIndicator = document.querySelector('.scroll-indicator');
+        
+        if (scrollContainer && scrollIndicator) {
+            scrollContainer.addEventListener('scroll', () => {
+                const opacity = scrollContainer.scrollTop > 10 ? 0 : 0.7;
+                const transform = scrollContainer.scrollTop > 10 ? 'translateY(-10px)' : 'translateY(0)';
+                
+                scrollIndicator.style.opacity = opacity;
+                scrollIndicator.style.transform = transform;
+            });
+            
+            setTimeout(() => {
+                if (scrollContainer.scrollHeight <= scrollContainer.clientHeight) {
+                    scrollIndicator.style.display = 'none';
+                }
+            }, 1000);
+        }
+    }
+
+    static updateGraphicsUI() {
+        document.querySelectorAll('[data-setting="explosions"]').forEach(btn => {
+            btn.classList.toggle('active', 
+                btn.dataset.value === graphicsManager.settings.explosions.toString());
+        });
+        
+        document.querySelectorAll('[data-setting="particleDensity"]').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.value === graphicsManager.settings.particleDensity);
+        });
+        
+        document.querySelectorAll('[data-setting="screenShake"]').forEach(btn => {
+            btn.classList.toggle('active', 
+                btn.dataset.value === graphicsManager.settings.screenShake.toString());
+        });
+        
+        document.querySelectorAll('[data-setting="frameRateTarget"]').forEach(btn => {
+            btn.classList.toggle('active', 
+                btn.dataset.value === graphicsManager.settings.frameRateTarget.toString());
+        });
+        
+        this.updatePerformanceIndicator();
+    }
+
+    static updatePerformanceIndicator() {
+        const performanceFill = document.getElementById('performanceFill');
+        const performanceText = document.getElementById('performanceText');
+        
+        let performanceLevel = 'medium';
+        let performanceTextValue = 'ОПТИМАЛЬНАЯ';
+        
+        if (graphicsManager.settings.particleDensity === 'low' && 
+            !graphicsManager.settings.screenShake && 
+            graphicsManager.settings.frameRateTarget === 30) {
+            performanceLevel = 'low';
+            performanceTextValue = 'МАКСИМАЛЬНАЯ';
+        } else if (graphicsManager.settings.particleDensity === 'high' && 
+                   graphicsManager.settings.screenShake && 
+                   graphicsManager.settings.frameRateTarget === 0) {
+            performanceLevel = 'high';
+            performanceTextValue = 'ВЫСОКАЯ НАГРУЗКА';
+        }
+        
+        performanceFill.className = `performance-fill ${performanceLevel}`;
+        performanceText.textContent = performanceTextValue;
+    }
+
+    static applyGraphicsPreset(preset) {
+        switch(preset) {
+            case 'low':
+                graphicsManager.settings.explosions = true;
+                graphicsManager.settings.particleDensity = 'low';
+                graphicsManager.settings.screenShake = false;
+                graphicsManager.settings.frameRateTarget = 30;
+                break;
+            case 'medium':
+                graphicsManager.settings.explosions = true;
+                graphicsManager.settings.particleDensity = 'medium';
+                graphicsManager.settings.screenShake = true;
+                graphicsManager.settings.frameRateTarget = 60;
+                break;
+            case 'high':
+                graphicsManager.settings.explosions = true;
+                graphicsManager.settings.particleDensity = 'high';
+                graphicsManager.settings.screenShake = true;
+                graphicsManager.settings.frameRateTarget = 0;
+                break;
+        }
     }
 }
+
+// ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ И ИНИЦИАЛИЗАЦИЯ ====================
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const collisionSystem = new CollisionSystem();
+const graphicsManager = new GraphicsManager();
+const keys = {};
+
+const GameState = {
+    player: null,
+    bullets: [],
+    enemies: [],
+    walls: [],
+    explosions: [],
+    bonuses: [],
+    bonusNotifications: [],
+    gameOver: false,
+    gamePaused: false,
+    score: 0,
+    playerLives: 3,
+    gameLevel: 1,
+    enemiesToKill: 5,
+    lastBonusTime: 0,
+    lastMoveSound: 0,
+    lastUpdateTime: 0,
+    frameCount: 0,
+    lastFpsUpdate: 0,
+    currentFPS: 0,
+    isMobile: false,
+    activeDirections: new Set(),
+    isShooting: false,
+    autoShootInterval: null,
+    currentDifficulty: 'normal',
+    graphicsSettings: {
+        explosions: true,
+        particleDensity: 'medium',
+        screenShake: true,
+        frameRateTarget: 60
+    }
+};
 
 function showBonusNotification(text) {
     const notification = {
@@ -1107,788 +1905,48 @@ function showBonusNotification(text) {
         life: 120
     };
     
-    bonusNotifications.push(notification);
+    GameState.bonusNotifications.push(notification);
 }
 
-function createLevel() {
-    const walls = [];
-    
-    // Границы уровня
-    walls.push(new Wall(0, 0, canvas.width, 20, false));
-    walls.push(new Wall(0, 0, 20, canvas.height, false));
-    walls.push(new Wall(0, canvas.height - 20, canvas.width, 20, false));
-    walls.push(new Wall(canvas.width - 20, 0, 20, canvas.height, false));
-    
-    // Статические стены
-    const wallPositions = [
-        [200, 150], [400, 100], [600, 200],
-        [100, 400], [300, 350], [500, 450],
-        [150, 250], [350, 300], [550, 150]
-    ];
-    
-    for (const [x, y] of wallPositions) {
-        walls.push(new Wall(x, y, 40, 40, false));
-    }
-    
-    // Разрушаемые стены
-    for (let i = 0; i < 25; i++) {
-        const x = Math.floor(Math.random() * (canvas.width - 80)) + 50;
-        const y = Math.floor(Math.random() * (canvas.height - 80)) + 50;
-        
-        // Не ставим стены слишком близко к игроку
-        if (Math.abs(x - 100) > 150 || Math.abs(y - 300) > 150) {
-            walls.push(new Wall(x, y, 30, 30, true));
-        }
-    }
-    
-    return walls;
-}
-
-function spawnEnemies(count) {
-    enemies = [];
-    for (let i = 0; i < count; i++) {
-        let validPosition = false;
-        let x, y, enemy;
-        
-        while (!validPosition) {
-            x = Math.floor(Math.random() * (canvas.width / 2 - 70)) + canvas.width / 2 + 50;
-            y = Math.floor(Math.random() * (canvas.height - 140)) + 70;
-            enemy = new Tank(x, y, RED);
-            
-            validPosition = true;
-            for (const wall of walls) {
-                if (enemy.collidesWith(wall)) {
-                    validPosition = false;
-                    break;
-                }
-            }
-        }
-        
-        enemies.push(enemy);
-    }
-}
-
-function drawGrid() {
-    ctx.strokeStyle = '#111';
-    ctx.lineWidth = 1;
-    
-    for (let x = 0; x < canvas.width; x += 40) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
-        ctx.stroke();
-    }
-    
-    for (let y = 0; y < canvas.height; y += 40) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(canvas.width, y);
-        ctx.stroke();
-    }
-}
-
-function updateUI() {
-    scoreElement.textContent = score;
-    livesElement.textContent = playerLives;
-    levelElement.textContent = gameLevel;
-    enemiesElement.textContent = enemies.length;
-}
-
-// Оптимизированная функция очистки массивов
-function cleanupArrays() {
-    // Удаляем старые взрывы
-    if (explosions.length > 20) {
-        explosions = explosions.slice(-20);
-    }
-    
-    // Удаляем старые уведомления
-    if (bonusNotifications.length > 5) {
-        bonusNotifications = bonusNotifications.slice(-5);
-    }
-}
-
-// Мониторинг FPS
-function updateFPS(timestamp) {
-    frameCount++;
-    if (timestamp - lastFpsUpdate >= 1000) {
-        currentFPS = frameCount;
-        frameCount = 0;
-        lastFpsUpdate = timestamp;
-        
-        // Для отладки можно выводить в консоль
-        if (currentFPS < 50) {
-            console.warn(`Low FPS: ${currentFPS}`);
-        }
-    }
-}
-
-// Функция применения сотрясения экрана
-function applyScreenShake() {
-    let totalShakeX = 0;
-    let totalShakeY = 0;
-    
-    for (const explosion of explosions) {
-        const shake = explosion.getScreenShake();
-        totalShakeX += shake.x;
-        totalShakeY += shake.y;
-    }
-    
-    // Ограничиваем максимальное сотрясение
-    totalShakeX = Math.max(-10, Math.min(10, totalShakeX));
-    totalShakeY = Math.max(-10, Math.min(10, totalShakeY));
-    
-    return { x: totalShakeX, y: totalShakeY };
-}
-
-// Управление экранами
-function showScreen(screen) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-    screen.classList.remove('hidden');
-    
-    // Обновляем экран ориентации
-    updateOrientationScreen();
-    
-    // Адаптация размера canvas для мобильных устройств
-    if (screen === gameScreen && isMobile) {
-        resizeCanvasForMobile();
-    }
-}
-
-// Адаптация размера canvas для мобильных устройств
-function resizeCanvasForMobile() {
-    const gameContainer = document.querySelector('.game-container');
-    const containerRect = gameContainer.getBoundingClientRect();
-    
-    // Для горизонтального режима используем всю доступную высоту
-    const maxWidth = containerRect.width;
-    const maxHeight = containerRect.height;
-    
-    let newWidth = maxWidth;
-    let newHeight = maxHeight;
-    
-    // Сохраняем соотношение сторон 4:3, но приоритет отдаем высоте
-    if (newHeight * 1.333 > newWidth) {
-        newHeight = newWidth * 0.75;
-    } else {
-        newWidth = newHeight * 1.333;
-    }
-    
-    canvas.width = newWidth;
-    canvas.height = newHeight;
-    
-    // Пересоздаем уровень с новыми размерами
-    if (player) {
-        walls = createLevel();
-    }
-}
-
-// Обработчики кнопок меню
-startButton.addEventListener('click', () => {
-    showScreen(gameScreen);
-    startGame();
-});
-
-controlsButton.addEventListener('click', () => {
-    showScreen(controlsScreen);
-});
-
-aboutButton.addEventListener('click', () => {
-    showScreen(aboutScreen);
-});
-
-difficultyButton.addEventListener('click', () => {
-    showScreen(difficultyScreen);
-    updateDifficultyStats();
-});
-
-graphicsButton.addEventListener('click', () => {
-    showScreen(graphicsScreen);
-    updateGraphicsUI();
-});
-
-backFromControls.addEventListener('click', () => {
-    showScreen(mainMenu);
-});
-
-backFromAbout.addEventListener('click', () => {
-    showScreen(mainMenu);
-});
-
-backFromDifficulty.addEventListener('click', () => {
-    showScreen(mainMenu);
-});
-
-backFromGraphics.addEventListener('click', () => {
-    showScreen(mainMenu);
-});
-
-menuButton.addEventListener('click', () => {
-    showScreen(mainMenu);
-});
-
-menuFromPauseButton.addEventListener('click', () => {
-    showScreen(mainMenu);
-    gamePaused = false;
-});
-
-continueButton.addEventListener('click', () => {
-    gamePaused = false;
-    pauseScreen.classList.add('hidden');
-});
-
-// Переключение звука
-soundToggle.addEventListener('click', () => {
-    const soundEnabled = soundSystem.toggleMute();
-    soundToggle.textContent = `🔊 ЗВУК: ${soundEnabled ? 'ВКЛ' : 'ВЫКЛ'}`;
-});
-
-// Функция обновления статистики сложности
-function updateDifficultyStats() {
-    const difficulty = DIFFICULTY_LEVELS[currentDifficulty];
-    enemySpeedStat.textContent = `${difficulty.enemySpeed}x`;
-    enemyShootStat.textContent = `${Math.round(difficulty.enemyShootChance * 100)}%`;
-    enemyCountStat.textContent = difficulty.initialEnemies;
-    bonusChanceStat.textContent = `${Math.round(difficulty.bonusChance * 100)}%`;
-}
-
-// Обработчики выбора сложности
-function setDifficulty(difficulty) {
-    currentDifficulty = difficulty;
-    
-    document.querySelectorAll('.difficulty-button').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    document.querySelector(`[data-difficulty="${difficulty}"]`).classList.add('active');
-    
-    updateDifficultyStats();
-    
-    difficultyBadge.textContent = DIFFICULTY_LEVELS[difficulty].name;
-    difficultyBadge.style.background = `linear-gradient(145deg, ${DIFFICULTY_LEVELS[difficulty].color}33, ${DIFFICULTY_LEVELS[difficulty].color}66)`;
-}
-
-easyButton.addEventListener('click', () => setDifficulty('easy'));
-normalButton.addEventListener('click', () => setDifficulty('normal'));
-hardButton.addEventListener('click', () => setDifficulty('hard'));
-expertButton.addEventListener('click', () => setDifficulty('expert'));
-
-// Функции для управления настройками графики
-function updateGraphicsUI() {
-    document.querySelectorAll('[data-setting="explosions"]').forEach(btn => {
-        btn.classList.toggle('active', 
-            btn.dataset.value === GRAPHICS_SETTINGS.explosions.toString());
-    });
-    
-    document.querySelectorAll('[data-setting="particleDensity"]').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.value === GRAPHICS_SETTINGS.particleDensity);
-    });
-    
-    document.querySelectorAll('[data-setting="screenShake"]').forEach(btn => {
-        btn.classList.toggle('active', 
-            btn.dataset.value === GRAPHICS_SETTINGS.screenShake.toString());
-    });
-    
-    document.querySelectorAll('[data-setting="frameRateTarget"]').forEach(btn => {
-        btn.classList.toggle('active', 
-            btn.dataset.value === GRAPHICS_SETTINGS.frameRateTarget.toString());
-    });
-    
-    updatePerformanceIndicator();
-}
-
-function applyGraphicsSettings() {
-    graphicsSettings.saveSettings();
-    graphicsSettings.applySettings();
-    
-    if (!GRAPHICS_SETTINGS.explosions) {
-        explosions = [];
-    }
-    
-    showScreen(mainMenu);
-}
-
-function resetGraphicsSettings() {
-    Object.assign(GRAPHICS_SETTINGS, {
-        explosions: true,
-        particleDensity: 'medium',
-        screenShake: true,
-        renderDistance: 'high',
-        frameRateTarget: 60,
-        lowSpecMode: false
-    });
-    
-    updateGraphicsUI();
-}
-
-function updatePerformanceIndicator() {
-    const performanceFill = document.getElementById('performanceFill');
-    const performanceText = document.getElementById('performanceText');
-    
-    let performanceLevel = 'medium';
-    let performanceTextValue = 'ОПТИМАЛЬНАЯ';
-    
-    if (GRAPHICS_SETTINGS.particleDensity === 'low' && 
-        !GRAPHICS_SETTINGS.screenShake && 
-        GRAPHICS_SETTINGS.frameRateTarget === 30) {
-        performanceLevel = 'low';
-        performanceTextValue = 'МАКСИМАЛЬНАЯ';
-    } else if (GRAPHICS_SETTINGS.particleDensity === 'high' && 
-               GRAPHICS_SETTINGS.screenShake && 
-               GRAPHICS_SETTINGS.frameRateTarget === 0) {
-        performanceLevel = 'high';
-        performanceTextValue = 'ВЫСОКАЯ НАГРУЗКА';
-    }
-    
-    performanceFill.className = `performance-fill ${performanceLevel}`;
-    performanceText.textContent = performanceTextValue;
-}
-
-// Обработчики для пресетов графики
-document.querySelectorAll('.preset-button').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const preset = this.dataset.preset;
-        
-        document.querySelectorAll('.preset-button').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-        
-        applyGraphicsPreset(preset);
-        updateGraphicsUI();
-    });
-});
-
-function applyGraphicsPreset(preset) {
-    switch(preset) {
-        case 'low':
-            GRAPHICS_SETTINGS.explosions = true;
-            GRAPHICS_SETTINGS.particleDensity = 'low';
-            GRAPHICS_SETTINGS.screenShake = false;
-            GRAPHICS_SETTINGS.frameRateTarget = 30;
-            break;
-        case 'medium':
-            GRAPHICS_SETTINGS.explosions = true;
-            GRAPHICS_SETTINGS.particleDensity = 'medium';
-            GRAPHICS_SETTINGS.screenShake = true;
-            GRAPHICS_SETTINGS.frameRateTarget = 60;
-            break;
-        case 'high':
-            GRAPHICS_SETTINGS.explosions = true;
-            GRAPHICS_SETTINGS.particleDensity = 'high';
-            GRAPHICS_SETTINGS.screenShake = true;
-            GRAPHICS_SETTINGS.frameRateTarget = 0;
-            break;
-    }
-}
-
-// Обработчики для переключателей графики
-document.querySelectorAll('.toggle-button').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const setting = this.dataset.setting;
-        const value = this.dataset.value;
-        
-        let processedValue = value;
-        if (value === 'true') processedValue = true;
-        if (value === 'false') processedValue = false;
-        if (!isNaN(value) && value !== '') processedValue = Number(value);
-        
-        GRAPHICS_SETTINGS[setting] = processedValue;
-        
-        updateGraphicsUI();
-    });
-});
-
-// Обработчики кнопок графики
-applyGraphics.addEventListener('click', applyGraphicsSettings);
-resetGraphics.addEventListener('click', resetGraphicsSettings);
-
-const keys = {};
-
-// Обработка клавиатуры (только для десктопа)
+// Обработка клавиатуры
 window.addEventListener('keydown', (e) => {
-    if (isMobile) return; // Игнорируем клавиатуру на мобильных
+    if (GameState.isMobile) return;
     
-    if (e.key.toLowerCase() === 'p') {
-        if (!gameOver && !levelCompleteScreen.classList.contains('hidden')) return;
-        
-        gamePaused = !gamePaused;
-        pauseScreen.classList.toggle('hidden', !gamePaused);
-        return;
-    }
+    const key = e.key.toLowerCase();
     
-    if (e.key.toLowerCase() === 'm') {
-        const soundEnabled = soundSystem.toggleMute();
-        soundToggle.textContent = `🔊 ЗВУК: ${soundEnabled ? 'ВКЛ' : 'ВЫКЛ'}`;
-        return;
-    }
-    
-    keys[e.key.toLowerCase()] = true;
-    
-    if (!gameOver && !gamePaused) {
-        if (e.key === 'ArrowUp' || e.key === 'ArrowRight' || 
-            e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
-            const bullet = player.shoot();
-            if (bullet) {
-                bullets.push(bullet);
+    switch(key) {
+        case 'p':
+            if (!GameState.gameOver && document.getElementById('levelCompleteScreen').classList.contains('hidden')) {
+                GameManager.togglePause();
             }
-        }
+            return;
+        case 'm':
+            GameManager.toggleSound();
+            return;
+        case 'r':
+            if (GameState.gameOver) {
+                GameManager.startGame();
+            }
+            return;
     }
     
-    if (e.key === 'r' && gameOver) {
-        restartGame();
+    keys[key] = true;
+    
+    if (!GameState.gameOver && !GameState.gamePaused) {
+        if (['arrowup', 'arrowright', 'arrowdown', 'arrowleft'].includes(e.key)) {
+            const bullet = GameState.player?.shoot();
+            if (bullet) GameState.bullets.push(bullet);
+        }
     }
 });
 
 window.addEventListener('keyup', (e) => {
-    if (isMobile) return;
+    if (GameState.isMobile) return;
     keys[e.key.toLowerCase()] = false;
 });
 
-function startGame() {
-    const difficulty = DIFFICULTY_LEVELS[currentDifficulty];
-    
-    player = new Tank(100, canvas.height / 2, GREEN, true);
-    player.speed = difficulty.playerSpeed;
-    
-    bullets = [];
-    explosions = [];
-    bonuses = [];
-    bonusNotifications = [];
-    gameOver = false;
-    gamePaused = false;
-    score = 0;
-    playerLives = difficulty.playerLives;
-    gameLevel = 1;
-    enemiesToKill = difficulty.initialEnemies;
-    
-    walls = createLevel();
-    spawnEnemies(enemiesToKill);
-    
-    gameOverScreen.classList.add('hidden');
-    pauseScreen.classList.add('hidden');
-    levelCompleteScreen.classList.add('hidden');
-    
-    // Сброс мобильного управления
-    activeDirections.clear();
-    isShooting = false;
-    
-    updateUI();
-    difficultyBadge.textContent = difficulty.name;
-    difficultyBadge.style.background = `linear-gradient(145deg, ${difficulty.color}33, ${difficulty.color}66)`;
-}
-
-function restartGame() {
-    startGame();
-}
-
-function spawnBonus() {
-    const now = Date.now();
-    if (now - lastBonusTime > 10000) {
-        const difficulty = DIFFICULTY_LEVELS[currentDifficulty];
-        
-        // Используем настройки сложности для шанса появления бонуса
-        if (Math.random() < difficulty.bonusChance) {
-            let validPosition = false;
-            let x, y, bonus;
-            
-            while (!validPosition) {
-                x = Math.floor(Math.random() * (canvas.width - 40)) + 20;
-                y = Math.floor(Math.random() * (canvas.height - 40)) + 20;
-                bonus = new Bonus(x, y);
-                
-                validPosition = true;
-                for (const wall of walls) {
-                    if (bonus.collidesWith(wall)) {
-                        validPosition = false;
-                        break;
-                    }
-                }
-            }
-            
-            bonuses.push(bonus);
-            lastBonusTime = now;
-        }
-    }
-}
-
-function completeLevel() {
-    // Убедимся, что функция вызывается только когда нужно
-    if (enemies.length > 0 || gameOver) return;
-    
-    const difficulty = DIFFICULTY_LEVELS[currentDifficulty];
-    
-    levelCompleteScreen.classList.remove('hidden');
-    completedLevelElement.textContent = gameLevel;
-    levelScoreElement.textContent = 500;
-    
-    // Добавляем очки за уровень
-    score += 500;
-    
-    // Обновляем интерфейс
-    updateUI();
-}
-
-// Обработчик кнопки следующего уровня
-nextLevelButton.addEventListener('click', () => {
-    const difficulty = DIFFICULTY_LEVELS[currentDifficulty];
-    
-    gameLevel++;
-    enemiesToKill = difficulty.initialEnemies + (gameLevel - 1) * difficulty.enemyIncrement;
-    playerLives++;
-    
-    walls = createLevel();
-    spawnEnemies(enemiesToKill);
-    
-    // Респаун игрока в безопасном месте
-    player.x = 100;
-    player.y = canvas.height / 2;
-    player.invulnerable = 120;
-    
-    levelCompleteScreen.classList.add('hidden');
-    
-    // Обновляем интерфейс
-    updateUI();
-});
-
-function gameLoop(timestamp) {
-    if (gameScreen.classList.contains('hidden')) {
-        requestAnimationFrame(gameLoop);
-        return;
-    }
-    
-    const deltaTime = timestamp - lastUpdateTime;
-    if (deltaTime < UPDATE_INTERVAL) {
-        requestAnimationFrame(gameLoop);
-        return;
-    }
-    lastUpdateTime = timestamp;
-    
-    updateFPS(timestamp);
-    
-    if (!gameOver && !gamePaused) {
-        // Применяем сотрясение экрана
-        const shake = applyScreenShake();
-        ctx.save();
-        ctx.translate(shake.x, shake.y);
-        
-        ctx.fillStyle = BLACK;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        drawGrid();
-        
-        // Обновляем пространственное разделение
-        spatialHash.clear();
-        [player, ...enemies, ...walls, ...bonuses].forEach(obj => {
-            spatialHash.insert(obj);
-        });
-        
-        player.update(walls);
-        
-        for (const enemy of enemies) {
-            enemy.update(walls, { x: player.x, y: player.y });
-        }
-        
-        // Обновленная логика коллизий для мобильных устройств
-        for (let i = bullets.length - 1; i >= 0; i--) {
-            if (!bullets[i].update()) {
-                bullets.splice(i, 1);
-                continue;
-            }
-            
-            const nearbyObjects = spatialHash.getNearby(bullets[i].x, bullets[i].y);
-            let collisionHandled = false;
-            
-            for (const obj of nearbyObjects) {
-                if (bullets[i].collidesWith(obj)) {
-                    if (obj.destructible) {
-                        const wallIndex = walls.indexOf(obj);
-                        if (wallIndex > -1) {
-                            walls.splice(wallIndex, 1);
-                            explosions.push(new EnhancedExplosion(bullets[i].x, bullets[i].y, 0.7));
-                        }
-                    } else if (!obj.destructible && obj instanceof Wall) {
-                        bullets.splice(i, 1);
-                        collisionHandled = true;
-                        break;
-                    }
-                    
-                    if (bullets[i] && bullets[i].isPlayer && obj instanceof Tank && !obj.isPlayer) {
-                        if (obj.takeDamage()) {
-                            const enemyIndex = enemies.indexOf(obj);
-                            if (enemyIndex > -1) {
-                                enemies.splice(enemyIndex, 1);
-                                explosions.push(new EnhancedExplosion(bullets[i].x, bullets[i].y, 1.2));
-                                score += 100;
-                                
-                                spawnBonus();
-                            }
-                        }
-                        bullets.splice(i, 1);
-                        collisionHandled = true;
-                        break;
-                    }
-                    
-                    if (bullets[i] && !bullets[i].isPlayer && obj === player) {
-                        if (player.takeDamage()) {
-                            playerLives--;
-                            explosions.push(new EnhancedExplosion(player.x + player.width/2, player.y + player.height/2, 1.5));
-                            
-                            if (playerLives <= 0) {
-                                gameOver = true;
-                                finalScoreElement.textContent = score;
-                                gameOverScreen.classList.remove('hidden');
-                            } else {
-                                player.x = 100;
-                                player.y = canvas.height / 2;
-                                player.invulnerable = 120;
-                            }
-                        }
-                        bullets.splice(i, 1);
-                        collisionHandled = true;
-                        break;
-                    }
-                }
-            }
-            
-            if (!collisionHandled && bullets[i]) {
-                if (bullets[i].x < 0 || bullets[i].x > canvas.width || 
-                    bullets[i].y < 0 || bullets[i].y > canvas.height) {
-                    bullets.splice(i, 1);
-                }
-            }
-        }
-        
-        for (let i = explosions.length - 1; i >= 0; i--) {
-            if (!explosions[i].update()) {
-                explosions.splice(i, 1);
-            }
-        }
-        
-        for (let i = bonuses.length - 1; i >= 0; i--) {
-            if (!bonuses[i].update()) {
-                bonuses.splice(i, 1);
-                continue;
-            }
-            
-            if (bonuses[i].collidesWith(player)) {
-                bonuses[i].applyBonus(player);
-                bonuses.splice(i, 1);
-            }
-        }
-        
-        for (let i = bonusNotifications.length - 1; i >= 0; i--) {
-            bonusNotifications[i].life--;
-            if (bonusNotifications[i].life <= 0) {
-                bonusNotifications.splice(i, 1);
-            }
-        }
-        
-        cleanupArrays();
-        
-        if (enemies.length === 0 && 
-            !gameOver && 
-            !gamePaused && 
-            levelCompleteScreen.classList.contains('hidden')) {
-            completeLevel();
-        }
-        
-        const visibleWalls = walls.filter(wall => isVisible(wall));
-        const visibleEnemies = enemies.filter(enemy => isVisible(enemy));
-        const visibleBullets = bullets.filter(bullet => isVisible(bullet));
-        const visibleExplosions = explosions.filter(explosion => isVisible(explosion));
-        const visibleBonuses = bonuses.filter(bonus => isVisible(bonus));
-        
-        for (const wall of visibleWalls) {
-            wall.draw();
-        }
-        
-        for (const bullet of visibleBullets) {
-            bullet.draw();
-        }
-        
-        for (const enemy of visibleEnemies) {
-            enemy.draw();
-        }
-        
-        for (const explosion of visibleExplosions) {
-            explosion.draw();
-        }
-        
-        for (const bonus of visibleBonuses) {
-            bonus.draw();
-        }
-        
-        player.draw();
-        
-        for (const notification of bonusNotifications) {
-            ctx.fillStyle = `rgba(255, 255, 0, ${notification.life / 120})`;
-            ctx.font = '20px Courier New';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(notification.text, notification.x, notification.y);
-        }
-        
-        updateUI();
-        
-        ctx.restore();
-    }
-    
-    requestAnimationFrame(gameLoop);
-}
-
 // Инициализация игры
-function init() {
-    restartButton.addEventListener('click', restartGame);
-    
-    // Инициализация мобильного управления
-    initMobileControls();
-    
-    // Устанавливаем сложность по умолчанию
-    setDifficulty('normal');
-    
-    // Обработка изменения ориентации экрана
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', handleResize);
-    
-    // Инициализация графического экрана
-    initGraphicsScreen();
-    
-    gameLoop();
-}
+window.addEventListener('load', () => GameManager.init());
 
-function handleResize() {
-    if (gameScreen.classList.contains('hidden')) return;
-    
-    // Перерисовываем canvas при изменении размера окна
-    setTimeout(() => {
-        if (isMobile) {
-            resizeCanvasForMobile();
-            updateOrientationScreen();
-        }
-    }, 100);
-}
-
-// Инициализация графического экрана
-function initGraphicsScreen() {
-    const scrollContainer = document.querySelector('.settings-scroll-container');
-    const scrollIndicator = document.querySelector('.scroll-indicator');
-    
-    if (scrollContainer && scrollIndicator) {
-        scrollContainer.addEventListener('scroll', () => {
-            // Скрываем индикатор после начала прокрутки
-            if (scrollContainer.scrollTop > 10) {
-                scrollIndicator.style.opacity = '0';
-                scrollIndicator.style.transform = 'translateY(-10px)';
-            } else {
-                scrollIndicator.style.opacity = '0.7';
-                scrollIndicator.style.transform = 'translateY(0)';
-            }
-        });
-        
-        // Скрываем индикатор если контент полностью помещается
-        setTimeout(() => {
-            if (scrollContainer.scrollHeight <= scrollContainer.clientHeight) {
-                scrollIndicator.style.display = 'none';
-            }
-        }, 1000);
-    }
-}
-
-window.addEventListener('load', init);
+// Предотвращение контекстного меню
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());

@@ -741,7 +741,7 @@ class Bonus extends GameObject {
     constructor(x, y) {
         super(x, y, 20, 20);
         this.type = Math.floor(Math.random() * 3);
-        this.life = 300;
+        this.life = 600;
     }
     
     update() {

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="style.css">
+    <title>Танчики - Ретро Игра</title>
+    <style>
+        
+    </style>
+</head>
+<body>
+    <h1>ТАНЧИКИ - РЕТРО ВЕРСИЯ</h1>
+    
+    <div class="info-panel">
+        <div class="info-item">ОЧКИ: <span id="score">0</span></div>
+        <div class="info-item">ЖИЗНИ: <span id="lives">3</span></div>
+        <div class="info-item">УРОВЕНЬ: <span id="level">1</span></div>
+        <div class="info-item">ВРАГОВ: <span id="enemies">5</span></div>
+    </div>
+    
+    <div class="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        
+        <div id="gameOverScreen" class="game-over hidden">
+            <h1>ИГРА ОКОНЧЕНА</h1>
+            <p>Финальный счет: <span id="finalScore">0</span></p>
+            <button id="restartButton">ЗАПУСТИТЬ ЗАНОВО</button>
+        </div>
+    </div>
+    
+    <div class="controls">
+        <p>УПРАВЛЕНИЕ: WASD - движение, СТРЕЛКИ - стрельба, R - перезапуск</p>
+    </div>
+
+    <script src="sripts.js">
+       
+    </script>
+</body>
+</html>

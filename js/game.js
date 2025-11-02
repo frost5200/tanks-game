@@ -1094,17 +1094,28 @@ class LevelManager {
 
 class GameManager {
     static init() {
-        this.setupDOMReferences();
-        this.setupEventListeners();
-        this.setupMobileControls();
-        this.setDifficulty('normal');
-        
-        window.addEventListener('resize', Utils.throttle(this.handleResize.bind(this), 250));
-        window.addEventListener('orientationchange', this.handleResize.bind(this));
-        
-        this.initGraphicsScreen();
-        this.gameLoop();
+    console.log('🎮 Инициализация игры Танчики');
+    
+    // Защита от повторной инициализации
+    if (this.initialized) {
+        console.log('⚠️ Игра уже инициализирована');
+        return;
     }
+    this.initialized = true;
+    
+    this.setupDOMReferences();
+    this.setupEventListeners();
+    this.setupMobileControls();
+    this.setDifficulty('normal');
+    
+    window.addEventListener('resize', Utils.throttle(this.handleResize.bind(this), 250));
+    window.addEventListener('orientationchange', this.handleResize.bind(this));
+    
+    this.initGraphicsScreen();
+    this.gameLoop();
+    
+    console.log('✅ Игра инициализирована. Режим:', GameState.isMobile ? 'Сенсорный' : 'Десктопный');
+}
     
     static setupDOMReferences() {
         this.dom = {
@@ -1224,158 +1235,76 @@ class GameManager {
         });
     }
     
-    static setupMobileControls() {
-        GameState.isMobile = this.detectMobile();
+static setupMobileControls() {
+    GameState.isMobile = this.detectMobile();
+    
+    console.log('🎮 Настройка управления:', {
+        isTouchDevice: GameState.isMobile,
+        userAgent: navigator.userAgent
+    });
+    
+    if (GameState.isMobile) {
+        console.log('📱 Настройка сенсорного управления');
         
-        if (GameState.isMobile) {
-            this.setupTouchControls();
+        this.setupTouchControls();
+        this.setupOrientationHandler();
+        
+        // Показываем мобильные контролы
+        if (this.dom.mobileControls) {
             this.dom.mobileControls.classList.remove('hidden');
-            this.setupOrientationHandler();
-        } else {
+        }
+        
+    } else {
+        console.log('🖥️ Десктопный режим (клавиатура + мышь)');
+        if (this.dom.mobileControls) {
             this.dom.mobileControls.classList.add('hidden');
         }
     }
-    
-    static detectMobile() {
-    // Принудительный режим (для тестирования)
-    const FORCE_MOBILE_MODE = true; // Можно вынести в конфиг
-    if (FORCE_MOBILE_MODE) {
-        console.log('📱 Принудительный мобильный режим активирован');
-        return false;
-    }
-    
-    // Комплексная проверка мобильного устройства
-    const checks = {
-        // 1. Проверка User Agent
-        userAgent: function() {
-            const agents = [
-                /Android/i,
-                /webOS/i,
-                /iPhone/i,
-                /iPad/i,
-                /iPod/i,
-                /BlackBerry/i,
-                /Windows Phone/i,
-                /Mobile/i,
-                /Tablet/i,
-                /Samsung/i,
-                /Huawei/i,
-                /Xiaomi/i,
-                /OPPO/i,
-                /Vivo/i,
-                /Realme/i,
-                /OnePlus/i,
-                /Nokia/i,
-                /Sony/i,
-                /LG/i,
-                /Motorola/i,
-                /ZTE/i,
-                /Alcatel/i,
-                /Googlebot/i
-            ];
-            return agents.some(agent => navigator.userAgent.match(agent));
-        },
-        
-        // 2. Проверка сенсорного экрана
-        touchSupport: function() {
-            return 'ontouchstart' in window || 
-                   navigator.maxTouchPoints > 0 || 
-                   navigator.msMaxTouchPoints > 0;
-        },
-        
-        // 3. Проверка размера экрана и соотношения
-        screenSize: function() {
-            const width = window.screen.width;
-            const height = window.screen.height;
-            const ratio = window.devicePixelRatio || 1;
-            
-            // Типичные размеры мобильных устройств
-            const mobileWidth = width < 768 || height < 768;
-            const mobileRatio = ratio > 1; // Высокий DPI на мобильных
-            
-            return mobileWidth || mobileRatio;
-        },
-        
-        // 4. Проверка ориентации
-        orientation: function() {
-            return 'orientation' in window || 
-                   window.screen.orientation || 
-                   window.screen.mozOrientation || 
-                   window.screen.msOrientation;
-        },
-        
-        // 5. Проверка платформы
-        platform: function() {
-            const platforms = [
-                'Android', 'iPhone', 'iPad', 'iPod', 'BlackBerry', 
-                'Windows Phone', 'webOS', 'Mobile', 'Tablet'
-            ];
-            return platforms.some(platform => 
-                navigator.platform.includes(platform) || 
-                navigator.userAgent.includes(platform)
-            );
-        },
-        
-        // 6. Проверка медиа-запросов
-        mediaQuery: function() {
-            return window.matchMedia('(max-width: 768px)').matches ||
-                   window.matchMedia('(pointer: coarse)').matches ||
-                   window.matchMedia('(hover: none)').matches;
-        }
-    };
-    
-    // Подсчет результатов проверок
-    let mobileScore = 0;
-    const totalChecks = Object.keys(checks).length;
-    
-    for (const check in checks) {
-        if (checks[check]()) {
-            mobileScore++;
-        }
-    }
-    
-    // Определение результата
-    const isMobile = mobileScore >= 2; // Если 2+ проверки прошли - считаем мобильным
-    
-    // Детальная отладочная информация
-    console.log('📱 Детектор мобильных устройств:', {
-        userAgent: navigator.userAgent,
-        userAgentCheck: checks.userAgent(),
-        touchSupport: checks.touchSupport(),
-        screenSize: checks.screenSize(),
-        screen: { width: window.screen.width, height: window.screen.height },
-        viewport: { width: window.innerWidth, height: window.innerHeight },
-        pixelRatio: window.devicePixelRatio,
-        orientation: checks.orientation(),
-        platform: checks.platform(),
-        platformInfo: navigator.platform,
-        mediaQuery: checks.mediaQuery(),
-        mobileScore: mobileScore + '/' + totalChecks,
-        finalResult: isMobile
-    });
-    
-    return isMobile;
 }
     
-    static setupTouchControls() {
+   static detectMobile() {
+    // Простая и надежная проверка на сенсорное устройство
+    const isTouchDevice = 'ontouchstart' in window || 
+                          navigator.maxTouchPoints > 0 || 
+                          navigator.msMaxTouchPoints > 0;
+
+    console.log('👆 Проверка сенсорного устройства:', {
+        ontouchstart: 'ontouchstart' in window,
+        maxTouchPoints: navigator.maxTouchPoints,
+        msMaxTouchPoints: navigator.msMaxTouchPoints,
+        result: isTouchDevice,
+        userAgent: navigator.userAgent
+    });
+
+    return isTouchDevice;
+}
+    
+static setupTouchControls() {
+    console.log('👆 Настройка сенсорного управления');
+    
+    try {
         // Кнопки движения
         document.querySelectorAll('.movement-btn').forEach(button => {
             const direction = button.dataset.direction;
             
             const startHandler = (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 GameState.activeDirections.add(direction);
             };
             
             const endHandler = (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 GameState.activeDirections.delete(direction);
             };
             
+            // Только сенсорные события
             button.addEventListener('touchstart', startHandler, { passive: false });
             button.addEventListener('touchend', endHandler, { passive: false });
             button.addEventListener('touchcancel', endHandler, { passive: false });
             
+            // Также добавляем обработчики для мыши для отладки
             button.addEventListener('mousedown', startHandler);
             button.addEventListener('mouseup', endHandler);
             button.addEventListener('mouseleave', endHandler);
@@ -1384,7 +1313,13 @@ class GameManager {
         // Кнопка стрельбы
         const shootStart = (e) => {
             e.preventDefault();
+            e.stopPropagation();
             GameState.isShooting = true;
+            
+            // Очищаем предыдущий интервал
+            if (GameState.autoShootInterval) {
+                clearInterval(GameState.autoShootInterval);
+            }
             
             GameState.autoShootInterval = setInterval(() => {
                 if (GameState.isShooting && GameState.player && !GameState.gamePaused && !GameState.gameOver) {
@@ -1396,6 +1331,7 @@ class GameManager {
         
         const shootEnd = (e) => {
             e.preventDefault();
+            e.stopPropagation();
             GameState.isShooting = false;
             if (GameState.autoShootInterval) {
                 clearInterval(GameState.autoShootInterval);
@@ -1403,20 +1339,37 @@ class GameManager {
             }
         };
         
-        this.dom.mobileShoot.addEventListener('touchstart', shootStart, { passive: false });
-        this.dom.mobileShoot.addEventListener('touchend', shootEnd, { passive: false });
-        this.dom.mobileShoot.addEventListener('touchcancel', shootEnd, { passive: false });
+        if (this.dom.mobileShoot) {
+            this.dom.mobileShoot.addEventListener('touchstart', shootStart, { passive: false });
+            this.dom.mobileShoot.addEventListener('touchend', shootEnd, { passive: false });
+            this.dom.mobileShoot.addEventListener('touchcancel', shootEnd, { passive: false });
+            
+            // Для отладки
+            this.dom.mobileShoot.addEventListener('mousedown', shootStart);
+            this.dom.mobileShoot.addEventListener('mouseup', shootEnd);
+        }
         
         // Кнопки паузы и меню
-        this.dom.mobilePause.addEventListener('click', () => this.togglePause());
-        this.dom.mobileMenu.addEventListener('click', () => this.showScreen('main'));
+        if (this.dom.mobilePause) {
+            this.dom.mobilePause.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.togglePause();
+            });
+        }
         
-        document.addEventListener('touchmove', (e) => {
-            if (e.target.classList.contains('movement-btn') || e.target === this.dom.mobileShoot) {
-                e.preventDefault();
-            }
-        }, { passive: false });
+        if (this.dom.mobileMenu) {
+            this.dom.mobileMenu.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.showScreen('main');
+            });
+        }
+        
+        console.log('✅ Сенсорное управление настроено');
+        
+    } catch (error) {
+        console.error('❌ Ошибка настройки сенсорного управления:', error);
     }
+}
     
     static setupOrientationHandler() {
         const updateOrientation = () => {
@@ -1495,11 +1448,30 @@ class GameManager {
     }
     
     static startGame() {
+    console.log('🎮 StartGame вызван');
+    
+    // Защита от множественного запуска
+    if (this.startingGame) {
+        console.log('⚠️ Игра уже запускается');
+        return;
+    }
+    this.startingGame = true;
+    
+    try {
         const difficulty = DIFFICULTY_LEVELS[GameState.currentDifficulty];
         
+        if (!canvas) {
+            console.error('❌ Canvas не найден');
+            this.startingGame = false;
+            return;
+        }
+        
+        // Сброс состояния игры
         Object.assign(GameState, {
             player: new Tank(100, canvas.height / 2, COLORS.GREEN, true),
             bullets: [],
+            enemies: [],
+            walls: [],
             explosions: [],
             bonuses: [],
             bonusNotifications: [],
@@ -1510,7 +1482,8 @@ class GameManager {
             gameLevel: 1,
             enemiesToKill: difficulty.initialEnemies,
             lastBonusTime: 0,
-            lastMoveSound: 0
+            lastMoveSound: 0,
+            lastUpdateTime: performance.now()
         });
         
         GameState.player.speed = difficulty.playerSpeed;
@@ -1520,13 +1493,27 @@ class GameManager {
         GameState.activeDirections.clear();
         GameState.isShooting = false;
         
+        // Очистка интервалов
+        if (GameState.autoShootInterval) {
+            clearInterval(GameState.autoShootInterval);
+            GameState.autoShootInterval = null;
+        }
+        
         this.dom.gameOverScreen.classList.add('hidden');
         this.dom.pauseScreen.classList.add('hidden');
         this.dom.levelCompleteScreen.classList.add('hidden');
         
         this.updateUI();
         this.updateDifficultyBadge();
+        
+        console.log('✅ Игра успешно начата');
+        
+    } catch (error) {
+        console.error('❌ Ошибка при запуске игры:', error);
+    } finally {
+        this.startingGame = false;
     }
+}
     
     static nextLevel() {
         const difficulty = DIFFICULTY_LEVELS[GameState.currentDifficulty];
@@ -1593,27 +1580,46 @@ class GameManager {
     }
     
     static gameLoop(timestamp = 0) {
-        if (this.dom.screens.game.classList.contains('hidden')) {
+    try {
+        // Проверяем что игровой экран активен
+        if (!this.dom || !this.dom.screens || this.dom.screens.game.classList.contains('hidden')) {
             requestAnimationFrame(this.gameLoop.bind(this));
             return;
         }
         
-        const deltaTime = timestamp - GameState.lastUpdateTime;
-        if (deltaTime < GameConfig.PERFORMANCE.UPDATE_INTERVAL) {
+        // Используем performance.now() для более точного измерения времени
+        const currentTime = performance.now();
+        const deltaTime = currentTime - GameState.lastUpdateTime;
+        
+        // Оптимизация для мобильных устройств - более низкий FPS
+        const targetInterval = GameState.isMobile ? 
+            (1000 / 30) : // 30 FPS для мобильных
+            GameConfig.PERFORMANCE.UPDATE_INTERVAL; // 60 FPS для десктопа
+            
+        if (deltaTime < targetInterval) {
             requestAnimationFrame(this.gameLoop.bind(this));
             return;
         }
         
-        GameState.lastUpdateTime = timestamp;
-        this.updateFPS(timestamp);
+        GameState.lastUpdateTime = currentTime - (deltaTime % targetInterval);
+        this.updateFPS(currentTime);
         
+        // Проверяем что игра в активном состоянии
         if (!GameState.gameOver && !GameState.gamePaused) {
             this.updateGame();
             this.renderGame();
         }
         
         requestAnimationFrame(this.gameLoop.bind(this));
+        
+    } catch (error) {
+        console.error('🚨 Критическая ошибка в игровом цикле:', error);
+        // Перезапускаем цикл даже при ошибке
+        setTimeout(() => {
+            requestAnimationFrame(this.gameLoop.bind(this));
+        }, 100);
     }
+}
     
     static updateFPS(timestamp) {
         GameState.frameCount++;
@@ -1625,35 +1631,54 @@ class GameManager {
     }
     
     static updateGame() {
-        const shake = this.applyScreenShake();
-        ctx.save();
-        ctx.translate(shake.x, shake.y);
-        
-        collisionSystem.clear();
-        [
-            GameState.player,
-            ...GameState.enemies,
-            ...GameState.walls,
-            ...GameState.bonuses
-        ].forEach(obj => collisionSystem.insert(obj));
-        
-        GameState.player.update(GameState.walls);
-        GameState.enemies.forEach(enemy => enemy.update(GameState.walls, {
-            x: GameState.player.x,
-            y: GameState.player.y
-        }));
-        
-        this.updateBullets();
-        this.updateExplosions();
-        this.updateBonuses();
-        this.updateBonusNotifications();
-        
-        this.cleanupArrays();
-        this.checkLevelCompletion();
-        this.trySpawnBonus();
-        
-        ctx.restore();
+    const shake = this.applyScreenShake();
+    ctx.save();
+    ctx.translate(shake.x, shake.y);
+    
+    collisionSystem.clear();
+    
+    // Защита от null объектов
+    const objectsToInsert = [
+        GameState.player,
+        ...(GameState.enemies || []),
+        ...(GameState.walls || []),
+        ...(GameState.bonuses || [])
+    ].filter(obj => obj !== null && obj !== undefined && typeof obj.x === 'number');
+    
+    objectsToInsert.forEach(obj => {
+        if (obj && typeof obj.x === 'number' && typeof obj.y === 'number') {
+            collisionSystem.insert(obj);
+        }
+    });
+    
+    // Проверяем что игрок существует перед обновлением
+    if (GameState.player) {
+        GameState.player.update(GameState.walls || []);
     }
+    
+    // Проверяем врагов
+    if (GameState.enemies) {
+        GameState.enemies.forEach(enemy => {
+            if (enemy && GameState.player) {
+                enemy.update(GameState.walls || [], {
+                    x: GameState.player.x,
+                    y: GameState.player.y
+                });
+            }
+        });
+    }
+    
+    this.updateBullets();
+    this.updateExplosions();
+    this.updateBonuses();
+    this.updateBonusNotifications();
+    
+    this.cleanupArrays();
+    this.checkLevelCompletion();
+    this.trySpawnBonus();
+    
+    ctx.restore();
+}
     
     static updateBullets() {
         for (let i = GameState.bullets.length - 1; i >= 0; i--) {
@@ -2096,3 +2121,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Предотвращение контекстного меню
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+document.addEventListener('click', () => {
+    if (soundSystem && typeof soundSystem.setupAdvancedAudio === 'function') {
+        soundSystem.setupAdvancedAudio();
+    }
+});
+
+document.addEventListener('touchstart', () => {
+    if (soundSystem && typeof soundSystem.setupAdvancedAudio === 'function') {
+        soundSystem.setupAdvancedAudio();
+    }
+});
+
+// Автоматическая разблокировка при начале игры
+const originalStartGame = GameManager.startGame;
+GameManager.startGame = function() {
+    if (soundSystem && typeof soundSystem.setupAdvancedAudio === 'function') {
+        soundSystem.setupAdvancedAudio();
+    }
+    return originalStartGame.apply(this, arguments);
+};

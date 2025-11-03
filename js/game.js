@@ -26,7 +26,6 @@ const gameScreen = document.getElementById('gameScreen');
 const controlsScreen = document.getElementById('controlsScreen');
 const aboutScreen = document.getElementById('aboutScreen');
 const difficultyScreen = document.getElementById('difficultyScreen');
-const orientationScreen = document.getElementById('orientationScreen');
 
 // Кнопки меню
 const startButton = document.getElementById('startButton');
@@ -48,16 +47,7 @@ const enemySpeedStat = document.getElementById('enemySpeedStat');
 const enemyShootStat = document.getElementById('enemyShootStat');
 const enemyCountStat = document.getElementById('enemyCountStat');
 const bonusChanceStat = document.getElementById('bonusChanceStat');
-let gameMargin = {
-    horizontal: 20,
-    vertical: 20
-};
-let safeAreaInsets = {
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0
-};
+
 // Конфигурация уровней сложности
 const DIFFICULTY_LEVELS = {
     easy: {
@@ -162,6 +152,18 @@ let baseCanvasHeight = 600;
 let isFullscreen = false;
 let fullscreenButton = null;
 
+// Поля и безопасные зоны
+let gameMargin = {
+    horizontal: 20,
+    vertical: 20
+};
+let safeAreaInsets = {
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0
+};
+
 // Управление экранами
 function showScreen(screen) {
     document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
@@ -171,19 +173,6 @@ function showScreen(screen) {
     if (screen === gameScreen) {
         resizeCanvas();
         updateFullscreenButton();
-    }
-}
-
-// Проверка ориентации
-function checkOrientation() {
-    const isPortrait = window.innerHeight > window.innerWidth;
-    
-    if (isPortrait && window.innerWidth <= 768) {
-        orientationScreen.classList.remove('hidden');
-        return false;
-    } else {
-        orientationScreen.classList.add('hidden');
-        return true;
     }
 }
 
@@ -258,10 +247,11 @@ function handleFullscreenChange() {
     if (isTouchDevice) {
         setTimeout(() => {
             resizeCanvas();
-            checkOrientation();
         }, 300);
     }
 }
+
+// Функция для расчета безопасных зон
 function calculateSafeArea() {
     // Для устройств с безопасными зонами (iPhone X и новее)
     if (CSS.supports('padding-top: env(safe-area-inset-top)')) {
@@ -281,39 +271,28 @@ function calculateSafeArea() {
         };
     }
     
-    // Динамически рассчитываем поля в зависимости от размера экрана
+    // Динамически рассчитываем поля в зависимости от размера экрана и ориентации
+    const isPortrait = window.innerHeight > window.innerWidth;
+    
     if (window.innerWidth <= 480) {
-        gameMargin.horizontal = 10;
-        gameMargin.vertical = 15;
+        gameMargin.horizontal = isPortrait ? 10 : 5;
+        gameMargin.vertical = isPortrait ? 15 : 10;
     } else if (window.innerWidth <= 768) {
-        gameMargin.horizontal = 15;
-        gameMargin.vertical = 20;
+        gameMargin.horizontal = isPortrait ? 15 : 10;
+        gameMargin.vertical = isPortrait ? 20 : 15;
     } else {
         gameMargin.horizontal = 20;
         gameMargin.vertical = 30;
     }
 }
-// Обновленная функция для позиционирования мобильного управления
-function updateMobileControlsPosition() {
-    const mobileControls = document.querySelector('.mobile-controls');
-    if (!mobileControls || !mobileControlsActive) return;
-    
-    // Рассчитываем отступы для мобильного управления
-    const controlsPadding = Math.min(window.innerWidth * 0.03, 20);
-    
-    // Применяем отступы с учетом безопасных зон
-    mobileControls.style.paddingLeft = `${controlsPadding + safeAreaInsets.left}px`;
-    mobileControls.style.paddingRight = `${controlsPadding + safeAreaInsets.right}px`;
-    mobileControls.style.paddingBottom = `${controlsPadding + safeAreaInsets.bottom}px`;
-}
+
 // Изменение размера канваса
-// Обновленная функция resizeCanvas с учетом полей
 function resizeCanvas() {
     const gameContainer = document.querySelector('.game-container');
     const containerWidth = gameContainer.clientWidth;
     const containerHeight = gameContainer.clientHeight;
     
-    // Определяем безопасные зоны (особенно важно для iPhone с "челкой")
+    // Определяем безопасные зоны
     calculateSafeArea();
     
     // Рассчитываем доступное пространство с учетом полей и безопасных зон
@@ -332,8 +311,8 @@ function resizeCanvas() {
     }
     
     // Минимальный размер игрового поля
-    const minWidth = 300;
-    const minHeight = 225;
+    const minWidth = 280;
+    const minHeight = 210;
     
     if (newWidth < minWidth) {
         newWidth = minWidth;
@@ -361,10 +340,11 @@ function resizeCanvas() {
 // Обновление видимости мобильного управления
 function updateMobileControlsVisibility() {
     const mobileControlsElement = document.querySelector('.mobile-controls');
-    mobileControlsActive = isTouchDevice && window.innerWidth <= 768;
+    mobileControlsActive = isTouchDevice;
     
     if (mobileControlsActive) {
         mobileControlsElement.style.display = 'flex';
+        updateMobileControlsLayout();
     } else {
         mobileControlsElement.style.display = 'none';
         // Сбрасываем мобильное управление при отключении
@@ -376,9 +356,39 @@ function updateMobileControlsVisibility() {
     }
 }
 
+// Обновление позиционирования мобильного управления
+function updateMobileControlsPosition() {
+    const mobileControls = document.querySelector('.mobile-controls');
+    if (!mobileControls || !mobileControlsActive) return;
+    
+    // Рассчитываем отступы для мобильного управления
+    const controlsPadding = Math.min(window.innerWidth * 0.03, 15);
+    
+    // Применяем отступы с учетом безопасных зон
+    mobileControls.style.paddingLeft = `${controlsPadding + safeAreaInsets.left}px`;
+    mobileControls.style.paddingRight = `${controlsPadding + safeAreaInsets.right}px`;
+    mobileControls.style.paddingBottom = `${controlsPadding + safeAreaInsets.bottom}px`;
+    mobileControls.style.paddingTop = `${controlsPadding + safeAreaInsets.top}px`;
+}
+
+// Обновление layout мобильного управления в зависимости от ориентации
+function updateMobileControlsLayout() {
+    const isPortrait = window.innerHeight > window.innerWidth;
+    const actionButtons = document.querySelector('.action-buttons');
+    
+    if (isPortrait) {
+        // В портретной ориентации - вертикальное расположение
+        actionButtons.style.flexDirection = 'column';
+        actionButtons.style.alignItems = 'flex-end';
+    } else {
+        // В ландшафтной ориентации - горизонтальное расположение
+        actionButtons.style.flexDirection = 'row-reverse';
+        actionButtons.style.alignItems = 'center';
+    }
+}
+
 // Обработчики кнопок меню
 startButton.addEventListener('click', () => {
-    if (!checkOrientation()) return;
     showScreen(gameScreen);
     startGame();
 });
@@ -1249,8 +1259,6 @@ window.addEventListener('keyup', (e) => {
 });
 
 function startGame() {
-    if (!checkOrientation()) return;
-    
     const difficulty = DIFFICULTY_LEVELS[currentDifficulty];
     
     player = new Tank(100, canvas.height / 2, GREEN, true);
@@ -1515,9 +1523,8 @@ function init() {
     // Инициализируем мобильное управление
     initMobileControls();
     
-    // Проверяем ориентацию при загрузке и изменении размера
+    // Обработчики изменения размера и ориентации
     window.addEventListener('load', () => {
-        checkOrientation();
         calculateSafeArea();
         resizeCanvas();
         updateMobileControlsVisibility();
@@ -1525,7 +1532,6 @@ function init() {
     });
     
     window.addEventListener('resize', () => {
-        checkOrientation();
         calculateSafeArea();
         resizeCanvas();
         updateMobileControlsVisibility();
@@ -1533,11 +1539,10 @@ function init() {
     
     window.addEventListener('orientationchange', () => {
         setTimeout(() => {
-            checkOrientation();
             calculateSafeArea();
             resizeCanvas();
             updateMobileControlsVisibility();
-        }, 300); // Увеличили задержку для стабильности
+        }, 300);
     });
     
     // Обработчик для изменения безопасных зон

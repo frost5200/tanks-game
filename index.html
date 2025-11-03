@@ -1,43 +1,26 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <!-- В head добавьте эти мета-теги -->
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#000000">
-<meta name="msapplication-TileColor" content="#000000">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#000000">
-<meta name="msapplication-TileColor" content="#000000">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
+    <meta name="msapplication-TileColor" content="#000000">
     <title>Танчики - Ретро Игра</title>
     <link rel="stylesheet" href="css/style.css">
-</head>
-<style>    
-    body {
-        padding-left: env(safe-area-inset-left);
-        padding-right: env(safe-area-inset-right);
-        padding-top: env(safe-area-inset-top);
-        padding-bottom: env(safe-area-inset-bottom);
-    }
+    <style>
+        /* Базовые стили для поддержки safe-area-inset */
+        body {
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
     </style>
+</head>
 <body>
-    <!-- Экран ориентации -->
-    <div id="orientationScreen" class="screen hidden">
-        <div class="orientation-message">
-            <div class="orientation-icon">📱</div>
-            <h2>ПОВЕРНИТЕ УСТРОЙСТВО</h2>
-            <p>Для игры требуется альбомная ориентация</p>
-            <div class="orientation-arrow">↻</div>
-        </div>
-    </div>
-
     <!-- Главное меню -->
     <div id="mainMenu" class="screen">
         <div class="menu-container">
@@ -52,8 +35,8 @@
             </div>
             
             <div class="menu-footer">
-                <div class="version">v2.1 МОБИЛЬНАЯ</div>
-                <div class="orientation-hint">Играйте в альбомной ориентации</div>
+                <div class="version">v2.2 УНИВЕРСАЛЬНАЯ</div>
+                <div class="orientation-hint">Поддерживает портретную и ландшафтную ориентацию</div>
             </div>
         </div>
     </div>
@@ -170,7 +153,7 @@
     </div>
 
     <!-- Игровой экран -->
-    <div id="gameScreen" class="screen hidden">
+<div id="gameScreen" class="screen hidden">
         <div class="game-header">
             <div class="info-panel">
                 <div class="info-item">ОЧКИ: <span id="score">0</span></div>
@@ -199,9 +182,9 @@
                 <div class="action-buttons">
                     <button class="shoot-btn" id="shootButton">ОГОНЬ</button>
                     <div class="utility-buttons">
+                        <button class="utility-btn" id="fullscreenButton">⛶</button>
                         <button class="utility-btn" id="pauseButton">⏸</button>
                         <button class="utility-btn" id="menuButtonMobile">🏠</button>
-                        <button class="utility-btn" id="fullscreenButton">⛶</button>
                     </div>
                 </div>
             </div>
